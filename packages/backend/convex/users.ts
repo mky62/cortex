@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+
 export const getMany = query({
     args: {},
     handler: async (ctx) => {
@@ -18,10 +19,19 @@ export const add = mutation({
 
         const identity = await ctx.auth.getUserIdentity();
 
+
         if (identity == null) {
             throw new Error("unauthorized");
 
         }
+
+        const orgId = identity.orgId as string;
+
+        if (!orgId) {
+            throw new Error ('missing organization')
+        }
+
+
         const users = await ctx.db.insert("users", {
             name: "John Doe",
             tokenIdentifier: "1234567890",
