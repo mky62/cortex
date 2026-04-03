@@ -1,3 +1,5 @@
+"use client"
+
 import React from 'react'
 import { useOrganization } from '@clerk/nextjs'
 import { AuthLayout } from '../layouts/auth-layout'
