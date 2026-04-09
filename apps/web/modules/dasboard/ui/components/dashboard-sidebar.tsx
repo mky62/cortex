@@ -121,6 +121,7 @@ export default function DashboardSidebar() {
                                     asChild
                                     tooltip={item.title}
                                     isActive={isActive(item.url)}
+                                    className={cn(isActive(item.url) && "bg-gradient-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/60!")}
                                     >
                                         <Link href={item.url} className={cn("flex items-center", isActive(item.url) ? "text-primary" : "text-muted-foreground")}>
                                             <item.icon className="mr-2" />
@@ -144,6 +145,7 @@ export default function DashboardSidebar() {
                                     asChild
                                     tooltip={item.title}
                                     isActive={isActive(item.url)}
+                                     className={cn(isActive(item.url) && "bg-gradient-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/60!")}
                                     >
                                         <Link href={item.url} className={cn("flex items-center", isActive(item.url) ? "text-primary" : "text-muted-foreground")}>
                                             <item.icon className="mr-2" />
@@ -167,6 +169,8 @@ export default function DashboardSidebar() {
                                     asChild
                                     tooltip={item.title}
                                     isActive={isActive(item.url)}
+                                     className={cn(isActive(item.url) && "bg-gradient-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/60!")}
+                                   
                                     >
                                         <Link href={item.url} className={cn("flex items-center", isActive(item.url) ? "text-primary" : "text-muted-foreground")}>
                                             <item.icon className="mr-2" />
