@@ -2,7 +2,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "convex/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import WidgetHeader from "../components/widget-header";
+import {WidgetHeader} from "../components/widget-header";
 import { api } from "@workspace/backend/convex/_generated/api";
 import {
   Form,
@@ -45,7 +45,7 @@ export const WidgetAuthScreen = () => {
     screenResolution: `${window.screen.width}x${window.screen.height}`,
     viewportSize: `${window.innerWidth}x${window.innerHeight}`,
     timezoneOffset: new Date().getTimezoneOffset(),
-    refferer: document.referrer,
+    referrer: document.referrer,
     cookieEnabled: navigator.cookieEnabled,
     currentUrl: window.location.href,
    };

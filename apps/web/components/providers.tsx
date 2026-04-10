@@ -18,7 +18,7 @@ export default function Providers({
   const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-      {children}
+        {children}
     </ConvexProviderWithClerk>
   )
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from "@workspace/ui/lib/utils";
 
-export default function WidgetHeader({
+export function WidgetHeader({
     children,
     className
 }: {
