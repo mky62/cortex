@@ -1,7 +1,7 @@
 'use client'
 
 import { use } from "react";
-import  WidgetView from "../modules/widget/ui/views/widegt-view";
+import { WidgetView } from "../modules/widget/ui/views/widegt-view";
 
 interface organizationProps {
   searchParams: Promise<{

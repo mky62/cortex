@@ -1,28 +1,107 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useAtomValue, useSetAtom } from "jotai"
+import { useAction, useMutation } from "convex/react"
 import { Loader2 } from "lucide-react"
 import { WidgetHeader } from "@/modules/widget/ui/components/widget-header"
+import { api } from "@workspace/backend/convex/_generated/api"
 import {
+  contactSessionIdAtomFamily,
   errorMessageAtom,
   loadingMessageAtom,
+  organizationIdAtom,
   screenAtom,
 } from "@/modules/widget/atoms/widget-atoms"
+import { CONTACT_SESSION_KEY } from "@/modules/widget/constants"
+
+type InitStep = "org" | "auth" | "session" | "settings" | "vapi" | "done"
 
 export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string | null }) => {
+  const [step, setStep] = useState<InitStep>("org")
+  const [sessionValid, setSessionValid] = useState(false)
+
   const loadingMessage = useAtomValue(loadingMessageAtom)
   const setLoadingMessage = useSetAtom(loadingMessageAtom)
+  const setOrganizationId = useSetAtom(organizationIdAtom)
   const setErrorMessage = useSetAtom(errorMessageAtom)
   const setScreen = useSetAtom(screenAtom)
 
+  const contactSessionId = useAtomValue(contactSessionIdAtomFamily(organizationId || ""))
+
+  const validateOrganization = useAction(api.public.organizations.validate)
+  const validateContactSession = useMutation(api.public.contactSessions.validate)
+
   useEffect(() => {
-    setLoadingMessage("Loading organization")
+    if (step !== "org") return
+  
+    setLoadingMessage("Finding organization")
+
     if (!organizationId) {
-      setErrorMessage("Organization ID is required");
+      setErrorMessage("Organization ID is required")
       setScreen("error")
+      return
     }
-  }, [organizationId, setErrorMessage, setLoadingMessage, setScreen])
+
+    setLoadingMessage("Verifying...")
+
+
+    validateOrganization({ organizationId })
+      .then((result) => {
+        if (result.valid) {
+          setOrganizationId(organizationId)
+          setStep("session")
+          return
+        }
+
+        setErrorMessage(result.reason ?? "Organization is invalid")
+        setScreen("error")
+      })
+      .catch(() => {
+        setErrorMessage("Failed to validate organization")
+        setScreen("error")
+      })
+  }, [
+    step,
+    organizationId,
+    setErrorMessage,
+    setLoadingMessage,
+    setOrganizationId,
+    setStep,
+    setScreen,
+    validateOrganization,
+  ])
+
+  useEffect(() => {
+    if (step !== "session") return
+
+    setLoadingMessage("Checking session")  
+
+    if (!contactSessionId) {
+      setSessionValid(false)
+      setStep("done")
+      return
+    }
+
+    setLoadingMessage("Finding contact session")
+
+    validateContactSession({contactSessionId})
+      .then((result) => {
+        setSessionValid(result.valid)
+        setStep("done")
+      })
+      .catch(() => {
+        setSessionValid(false)
+        setStep("done")
+      })
+  }, [setLoadingMessage, step, validateContactSession])
+
+  useEffect(() => {
+    if (step !== "done") return;
+
+    const hasValidSesison = contactSessionId && sessionValid;
+    setScreen(hasValidSesison ? "selection" : "auth")
+  }, [sessionValid,contactSessionId, setScreen, step])
 
   return (
     <>
