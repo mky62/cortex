@@ -4,9 +4,11 @@ import React from 'react'
 
 import { useAtomValue } from 'jotai';
 import { screenAtom } from '@/modules/widget/atoms/widget-atoms';
-import { WidgetAuthScreen } from '../screens/widget-auth-screen';
-import { WidgetErrorScreen } from '../screens/widget-error-screen';
-import { WidgetLoadingScreen } from '../screens/widget-loading-screen';
+import { WidgetAuthScreen } from '@/modules/widget/ui/screens/widget-auth-screen'
+import { WidgetErrorScreen } from '@/modules/widget/ui/screens/widget-error-screen';
+import { WidgetLoadingScreen } from '@/modules/widget/ui/screens/widget-loading-screen';
+import { WidgetSelectionScreen } from '@/modules/widget/ui/screens/widget-selection-screen';
+import { WidgetChatScreen } from '@/modules/widget/ui/screens/widget-chat-screen';
 
 interface organizationProps {
     organizationId: string
@@ -20,10 +22,10 @@ export const WidgetView = ({ organizationId }: organizationProps) => {
     error: <WidgetErrorScreen/>,
     loading: <WidgetLoadingScreen organizationId={organizationId} />,
     auth: <WidgetAuthScreen />,
-    chat: <p>TODO</p>,
+    chat: <WidgetChatScreen />,
     contact: <p></p>,
     inbox: <p></p>,
-    selection: <p></p>,
+    selection: <WidgetSelectionScreen />,
     voice: <p></p>,
   }
 
