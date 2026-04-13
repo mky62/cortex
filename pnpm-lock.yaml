@@ -87,6 +87,9 @@ importers:
 
   apps/widget:
     dependencies:
+      '@convex-dev/agent':
+        specifier: ^0.6.1
+        version: 0.6.1(@ai-sdk/provider-utils@4.0.23(zod@3.25.76))(ai@6.0.158(zod@3.25.76))(convex-helpers@0.1.114(@standard-schema/spec@1.1.0)(convex@1.32.0(react@19.2.4))(hono@4.12.7)(react@19.2.4)(typescript@5.9.3)(zod@3.25.76))(convex@1.32.0(react@19.2.4))(react@19.2.4)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.4))

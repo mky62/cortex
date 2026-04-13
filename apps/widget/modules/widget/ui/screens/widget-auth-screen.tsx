@@ -15,16 +15,16 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
 import { Doc } from "@workspace/backend/convex/_generated/dataModel";
-import { contactSessionIdAtomFamily, organizationIdAtom } from "../../atoms/widget-atoms";
+import { contactSessionIdAtomFamily, organizationIdAtom, screenAtom } from "../../atoms/widget-atoms";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
 });
 
-const organizationId = "org_123";
 
 export const WidgetAuthScreen = () => {
+  const setScreen = useSetAtom(screenAtom)
 
   const organizationId = useAtomValue(organizationIdAtom)
   const setContactSessionId = useSetAtom(contactSessionIdAtomFamily(organizationId || ''))
@@ -61,7 +61,8 @@ export const WidgetAuthScreen = () => {
     metadata,
    });
 
-   setContactSessionId(contactSessionId)
+   setContactSessionId(contactSessionId);
+   setScreen("selection")
   }
 
   return (

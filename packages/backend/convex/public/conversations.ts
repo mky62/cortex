@@ -1,7 +1,34 @@
 import { mutation , query} from "../_generated/server"
 import { ConvexError, v } from "convex/values"
 import { supportAgent }  from '../system/ai/agents/supportAgent'
+import { paginationOptsValidator } from "convex/server"
 
+export const getMany = query({
+    args: {
+        contactSessionId: v.id("contactSessions"),
+        paginationOpts: paginationOptsValidator
+    },
+
+
+    handler: async (ctx, args) => {
+        const contactSession = await ctx.db.get(args.contactSessionId);
+
+        if (!contactSession || contactSession.expiresAt < Date.now()) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Invalid session",
+            });
+        }
+
+        const conversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_contact_session_id", (q) => 
+                q.eq("contactSessionId", args.contactSessionId)
+        )
+        .order("desc")
+        .paginate(args.paginationOpts)
+    },
+})
 export const getOne = query({
     args: {
         conversationId: v.id("conversations"),

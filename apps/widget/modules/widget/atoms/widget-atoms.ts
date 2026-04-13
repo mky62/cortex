@@ -1,9 +1,9 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
+import { atomWithStorages } from "jotai/utils";
 import { WidgetScreen } from "../types";
 import { atomFamily } from 'jotai-family'
 import { CONTACT_SESSION_KEY } from "../constants";
-import { Id } from "@workspace/backend/convex/_generated/dataModel"
+import { Id, Doc } from "@workspace/backend/convex/_generated/dataModel"
 
 
 export const screenAtom = atom<WidgetScreen>("loading")
@@ -16,3 +16,7 @@ export const contactSessionIdAtomFamily =
 atomFamily(( organizationId: string) => {
     return atomWithStorage<Id<"contactSessions"> | null>(`${CONTACT_SESSION_KEY}_${organizationId}`, null )
 });
+
+export const widgetSettingsAtom = atom<Doc<"widgetSettings"> | null>(null);
+
+
