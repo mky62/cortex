@@ -33,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   "system/ai/agents/supportAgent": typeof system_ai_agents_supportAgent;
   "system/contactSessions": typeof system_contactSessions;
   "system/conversations": typeof system_conversations;
+  "private/conversations": typeof private_conversations;
   users: typeof users;
 }>;
 
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
+  | FunctionReference<any, "private">
 >;
 
 /**

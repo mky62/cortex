@@ -1,1 +1,1 @@
-export { validate } from "../contactSesisons"
+export { validate } from "../contactSesisons.js"

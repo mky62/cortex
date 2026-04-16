@@ -1,9 +1,10 @@
-import { ConversationsLayout } from "@/modules/dashboard/ui/layouts/conversations-layout";
+import {ConversationsView} from "@/modules/dasboard/ui/views/conversations-view"
 
-const Layout = ({
-  children
-}: { children: React.ReactNode; }) => {
-  return <ConversationsLayout>{children}</ConversationsLayout>
-};
 
-export default Layout;
+export default function ConversationsPage() {
+    return (
+       
+            <ConversationsView />
+
+    )
+}

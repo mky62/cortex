@@ -1,4 +1,4 @@
-import { internalQuery } from "../_generated/server";
+import { internalQuery } from "../_generated/server.js";
 import { v } from "convex/values";
 
 

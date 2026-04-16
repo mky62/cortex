@@ -1,6 +1,6 @@
-import { mutation , query} from "../_generated/server"
+import { mutation , query} from "../_generated/server.js"
 import { ConvexError, v } from "convex/values"
-import { supportAgent }  from '../system/ai/agents/supportAgent'
+import { supportAgent }  from '../system/ai/agents/supportAgent.js'
 import { paginationOptsValidator } from "convex/server"
 import { MessageDoc } from "@convex-dev/agent"
 
