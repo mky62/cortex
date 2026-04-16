@@ -9,9 +9,9 @@ import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-
 import { useThreadMessages, toUIMessages } from "@convex-dev/agent/react"
 import { useAtomValue, useSetAtom } from "jotai"
 import { useAction, useQuery } from "convex/react"
-import { screenAtom , organizationIdAtom , conversationIdAtom, contactSessionIdAtomFamily} from "../../atoms/widget-atoms"
+import { screenAtom , organizationIdAtom , conversationIdAtom, contactSessionIdAtomFamily, widgetSettingsAtom} from "../../atoms/widget-atoms"
 import { WidgetHeader } from "@/modules/widget/ui/components/widget-header"
-import { ArrowBigLeft, MenuIcon } from "lucide-react"
+import { ArrowBigLeft } from "lucide-react"
 import { Button } from "@workspace/ui/components/button";
 import { api } from "@workspace/backend/convex/_generated/api";
 import { Form, FormField } from "@workspace/ui/components/form";
@@ -21,12 +21,10 @@ import { useMemo } from "react";
 import {
   AIConversation,
   AIConversationContent,
-  AIConversationScrollButton,
 } from "@workspace/ui/components/ai/conversation"
 
 import {
   AIInput,
-  AIInputButton,
   AIInputTextarea,
   AIInputToolbar,
   AIInputTools,
@@ -59,15 +57,6 @@ export const WidgetChatScreen = () => {
   const contactSessionId = useAtomValue(contactSessionIdAtomFamily(organizationId || '' ))
 
   const widgetSettings = useAtomValue(widgetSettingsAtom);
-
-  const conversation = useQuery(
-    api.public.conversations.getOne,
-    conversationId && contactSessionId ? {
-      conversationId, 
-      contactSessionId,
-    } 
-    : "skip"
-  );
 
    const onBack = () => {
     setConversationId(null);

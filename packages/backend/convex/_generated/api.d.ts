@@ -9,6 +9,7 @@
  */
 
 import type * as contactSesisons from "../contactSesisons.js";
+import type * as private_conversations from "../private/conversations.js";
 import type * as public_contactSessions from "../public/contactSessions.js";
 import type * as public_conversations from "../public/conversations.js";
 import type * as public_messages from "../public/messages.js";
@@ -26,6 +27,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   contactSesisons: typeof contactSesisons;
+  "private/conversations": typeof private_conversations;
   "public/contactSessions": typeof public_contactSessions;
   "public/conversations": typeof public_conversations;
   "public/messages": typeof public_messages;
@@ -33,7 +35,6 @@ declare const fullApi: ApiFromModules<{
   "system/ai/agents/supportAgent": typeof system_ai_agents_supportAgent;
   "system/contactSessions": typeof system_contactSessions;
   "system/conversations": typeof system_conversations;
-  "private/conversations": typeof private_conversations;
   users: typeof users;
 }>;
 
@@ -48,7 +49,6 @@ declare const fullApi: ApiFromModules<{
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
-  | FunctionReference<any, "private">
 >;
 
 /**

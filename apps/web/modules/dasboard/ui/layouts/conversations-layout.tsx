@@ -6,7 +6,7 @@ import {
 import { ConversationsPanel } from "../components/conversations-panel"
 
 
-export const ConversationsLayout = () => ({
+export const ConversationsLayout = ({
   children
 }: { children: React.ReactNode; }) => {
   return (
