@@ -1,10 +1,5 @@
 "use client"
 
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@workspace/ui/components/resizable"
 import { usePathname } from "next/navigation"
 import { ConversationsPanel } from "../components/conversations-panel"
 
@@ -21,20 +16,14 @@ export const ConversationsLayout = ({
       <div className="flex h-full min-w-0 flex-1 lg:hidden">
         {isConversationIndex ? <ConversationsPanel /> : children}
       </div>
-      <ResizablePanelGroup className="hidden h-full min-w-0 lg:flex">
-        <ResizablePanel
-          className="min-w-0"
-          defaultSize={30}
-          minSize={25}
-          maxSize={40}
-        >
+      <div className="hidden h-full min-w-0 flex-1 lg:flex">
+        <aside className="h-full w-[360px] min-w-[320px] max-w-[420px] shrink-0 overflow-hidden border-r bg-background">
           <ConversationsPanel />
-        </ResizablePanel>
-        <ResizableHandle className="shrink-0" />
-        <ResizablePanel className="min-w-0" defaultSize={70} minSize={60}>
+        </aside>
+        <section className="h-full min-w-0 rounded-r-lg flex-1 overflow-hidden bg-background">
           {children}
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </section>
+      </div>
     </>
   )
 }

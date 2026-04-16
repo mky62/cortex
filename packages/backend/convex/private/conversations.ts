@@ -5,6 +5,47 @@ import type { MessageDoc } from "@convex-dev/agent"
 import { query } from "../_generated/server.js"
 import { supportAgent } from "../system/ai/agents/supportAgent.js"
 
+export const getOne = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Unauthorized",
+      })
+    }
+
+    const organizationId = identity.orgId as string | undefined
+
+    if (!organizationId) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Missing organization",
+      })
+    }
+
+    const conversation = await ctx.db.get(args.conversationId)
+
+    if (!conversation || conversation.organizationId !== organizationId) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Conversation not found",
+      })
+    }
+
+    const contactSession = await ctx.db.get(conversation.contactSessionId)
+
+    return {
+      ...conversation,
+      contactSession,
+    }
+  },
+})
+
 export const getMany = query({
   args: {
     status: v.optional(

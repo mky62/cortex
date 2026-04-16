@@ -1,4 +1,7 @@
 
+import { ConversationIdView } from "@/modules/dasboard/ui/views/conversation-id-view";
+import { Id } from "@workspace/backend/convex/_generated/dataModel";
+
 const Page = async ({
     params,
 }: {
@@ -6,9 +9,7 @@ const Page = async ({
 }) => {
     const { conversationId } = await params;
     return (
-        <div>
-            <h1>Conversation {conversationId}</h1>
-        </div>
+        <ConversationIdView conversationId={conversationId as Id<"conversations">} />
     )
 }
 

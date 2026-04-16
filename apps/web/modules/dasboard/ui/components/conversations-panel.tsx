@@ -31,6 +31,7 @@ import { statusFilterAtom } from "../../atoms"
 import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll"
 import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger"
 import { Spinner } from "@workspace/ui/components/spinner"
+import { ConversationStatusIcon } from "@workspace/ui/components/conversation-status-icon"
 
 const statusFilterOptions = [
   {
@@ -89,7 +90,7 @@ export const ConversationsPanel = () => {
   })
 
   return (
-    <div className="flex h-full w-full flex-col bg-background text-sidebar-foreground">
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background text-sidebar-foreground">
       <div className="flex flex-col gap-3.5 border-b p-2">
         <Select
           defaultValue="all"
@@ -115,8 +116,8 @@ export const ConversationsPanel = () => {
           </SelectContent>
         </Select>
       </div>
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex w-full flex-col text-sm">
+      <ScrollArea className="min-h-0 flex-1 overflow-hidden [&_[data-slot=scroll-area-viewport]>div]:!block [&_[data-slot=scroll-area-viewport]>div]:!w-full [&_[data-slot=scroll-area-viewport]>div]:!min-w-0 [&_[data-slot=scroll-area-viewport]>div]:!max-w-full">
+        <div className="flex w-full min-w-0 max-w-full flex-col overflow-hidden text-sm">
           {isLoadingFirstPage ? (
             <div className="flex justify-center p-4 text-muted-foreground">
               <Spinner className="size-5" />
@@ -147,7 +148,7 @@ export const ConversationsPanel = () => {
                 <Link
                   key={conversation._id}
                   className={cn(
-                    "relative flex min-h-16 cursor-pointer items-start gap-3 border-b px-3 py-3 hover:bg-muted/50",
+                    "relative grid min-h-16 w-full min-w-0 cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-start gap-3 overflow-hidden border-b px-3 py-3 hover:bg-muted/50",
                     isActive && "bg-muted/50"
                   )}
                   href={`/conversations/${conversation._id}`}
@@ -165,18 +166,18 @@ export const ConversationsPanel = () => {
                       <div className="h-5 w-7 rounded-sm bg-muted ring-1 ring-border" />
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span className="truncate font-semibold">
+                  <div className="min-w-0 overflow-hidden">
+                    <div className="flex min-w-0 flex-col gap-1 overflow-hidden">
+                      <span className="block min-w-0 truncate font-semibold">
                         {contactName}
                       </span>
-                      <div className="flex min-w-0 items-center gap-1">
+                      <div className="flex min-w-0 items-center gap-1 overflow-hidden">
                         {isLastMessageFromOperator && (
                           <CornerUpLeftIcon className="size-3.5 shrink-0" />
                         )}
                         <span
                           className={cn(
-                            "truncate text-muted-foreground",
+                            "min-w-0 flex-1 truncate text-muted-foreground",
                             !isLastMessageFromOperator && "text-foreground"
                           )}
                         >
@@ -184,6 +185,16 @@ export const ConversationsPanel = () => {
                         </span>
                       </div>
                     </div>
+                  </div>
+                  <div
+                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium capitalize text-muted-foreground"
+                    title={conversation.status}
+                  >
+                    <ConversationStatusIcon
+                      status={conversation.status}
+                      className="size-4"
+                    />
+                    <span className="hidden sm:inline">{conversation.status}</span>
                   </div>
                 </Link>
               )
