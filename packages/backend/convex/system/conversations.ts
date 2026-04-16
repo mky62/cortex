@@ -15,3 +15,13 @@ export const getByThreadId = internalQuery({
         return conversation;  
     }
 })
+
+export const getById = internalQuery({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const conversation = await ctx.db.get(args.conversationId);
+        return conversation;
+    }
+})

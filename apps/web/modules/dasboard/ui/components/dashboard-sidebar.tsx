@@ -95,7 +95,7 @@ export default function DashboardSidebar() {
                             elements:
                             {
                                 rootBox: "w-full! h-8!",
-                                avatarBox: "size-4 rounded-sm!",
+                                avatarBox: "size-4 rounded-sm! group-data-[collapsible=icon]:size-8!",
                                 organizationSwitcherTrigger: "w-full! justify-start! group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2!",
                                 organizationPreview: "group-data-[collapsible=icon]:justify-center! gap-2!",
                                 organizationPreviewTextContainer: "group-data-[collapsible=icon]:hidden! text-sm! font-medium! text-sidebar-foreground!",
@@ -190,12 +190,13 @@ export default function DashboardSidebar() {
                   showName
                   appearance={{
                     elements: {
-                        rootBox: "w-full! h-8!",
-                        userButtonTrigger: "w-full! p-2! hover:bg-sidebar-accent! hover:text-sidebar-accent-foreground! group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! ",
-                        userButtonBox: "w-full! flex-row-reverse justify-start! gap-2! group-data-[collapsible=icon]:justify-center!",
-                        userButtonIdentifier: "text-sm! font-medium! text-sidebar-foreground! group-data-[collapsible=icon]:hidden!",
-                        userButtonAvatarBox: "size-4 rounded-sm!"
-                    }
+                        rootBox: "w-full! h-8! group-data-[collapsible=icon]:h-8!",
+                        userButtonTrigger: "w-full! h-full! p-2! hover:bg-sidebar-accent! hover:text-sidebar-accent-foreground! group-data-[collapsible=icon]:justify-center! group-data-[collapsible=icon]:p-0!",
+                        userButtonBox: "w-full! h-full! flex-row-reverse justify-start! gap-2! group-data-[collapsible=icon]:justify-center!",
+                        userButtonOuterIdentifier: "group-data-[collapsible=icon]:hidden!",
+                        userButtonIdentifier: "group-data-[collapsible=icon]:hidden!",
+                        userButtonAvatarBox: "size-4 rounded-sm! group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:rounded-full!"
+                          }
                   }}  />          
                 </SidebarMenuItem>
             </SidebarMenu>
