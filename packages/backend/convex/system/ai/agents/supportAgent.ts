@@ -1,9 +1,16 @@
 import { components } from "../../../_generated/api.js";
 import { Agent } from "@convex-dev/agent";
-import { openai } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 export const supportAgent = new Agent(components.agent, {
   name: "My Agent",
-  languageModel: openai.chat("gpt-4o-mini"),
-  instructions: "You are a weather forecaster."
+  languageModel: openrouter.chat("openai/gpt-4o-mini"),
+  callSettings: {
+    maxOutputTokens: 1024,
+  },
+  instructions: "You are a support agent. Help the user with their queries."
 });

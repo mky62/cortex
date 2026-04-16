@@ -65,10 +65,13 @@ export const WidgetSelectionScreen = () => {
         </div>
       </WidgetHeader>
 
-      <div className="flex felx-col ">
-        <Button onClick={handleNewConversations}
-        disabled={isPending}>
-          <MessageSquareIcon className="h-4 w-4 mr-2" />
+      <div className="flex flex-1 flex-col p-4">
+        <Button
+          className="h-12 w-full justify-start rounded-lg"
+          disabled={isPending}
+          onClick={handleNewConversations}
+        >
+          <MessageSquareIcon className="mr-2 h-4 w-4" />
           Chat with us  
         </Button>
       </div>

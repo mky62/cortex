@@ -18,9 +18,10 @@ export const create = mutation({
                 vendor: v.optional(v.string()),
                 screenResolution: v.optional(v.string()),
                 viewportSize: v.optional(v.string()),
+                timezone: v.optional(v.string()),
                 timezoneOffset: v.optional(v.number()),
                 cookieEnabled: v.optional(v.boolean()),
-                refferer: v.optional(v.string()),
+                referrer: v.optional(v.string()),
                 currentUrl: v.optional(v.string())
             })
         )

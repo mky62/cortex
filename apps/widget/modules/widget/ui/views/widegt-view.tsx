@@ -9,6 +9,7 @@ import { WidgetErrorScreen } from '@/modules/widget/ui/screens/widget-error-scre
 import { WidgetLoadingScreen } from '@/modules/widget/ui/screens/widget-loading-screen';
 import { WidgetSelectionScreen } from '@/modules/widget/ui/screens/widget-selection-screen';
 import { WidgetChatScreen } from '@/modules/widget/ui/screens/widget-chat-screen';
+import { WidgetInboxScreen } from '@/modules/widget/ui/screens/widget-inbox-screen';
 
 interface organizationProps {
     organizationId: string
@@ -24,14 +25,13 @@ export const WidgetView = ({ organizationId }: organizationProps) => {
     auth: <WidgetAuthScreen />,
     chat: <WidgetChatScreen />,
     contact: <p></p>,
-    inbox: <p></p>,
+    inbox: <WidgetInboxScreen />,
     selection: <WidgetSelectionScreen />,
     voice: <p></p>,
   }
 
   return (
-    <main
-    className='flex h-full w-full flex-col overflow-hidden rounded-xl border bg-muted'>
+    <main className='flex h-dvh w-full flex-col overflow-hidden rounded-xl border bg-muted'>
      {screenComponents[screen]}
     </main>
    

@@ -142,7 +142,7 @@ export const WidgetChatScreen = () => {
        </div>
       </WidgetHeader>
       <AIConversation>
-      <AIConversationContent>
+      <AIConversationContent className="mx-auto flex w-full max-w-3xl flex-col px-4 py-6">
         <InfiniteScrollTrigger
             canLoadMore={canLoadMore}
             isLoadingMore={isLoadingMore}
@@ -155,7 +155,7 @@ export const WidgetChatScreen = () => {
             from={message.role === "user" ? "user" : "assistant"}
             key={message.id}>
               <AIMessageContent>
-                <AIResponse>{message.content}</AIResponse>
+                <AIResponse>{message.text}</AIResponse>
               </AIMessageContent>
                {message.role === "assistant" && (
                   <MessageSquareDashedIcon
@@ -192,9 +192,11 @@ export const WidgetChatScreen = () => {
           })}
         </AISuggestions>
       )}
+      <div className="border-t bg-background p-3">
+      <div className="mx-auto w-full max-w-3xl">
       <Form {...form}>
           <AIInput
-            className="rounded-none border-x-0 border-b-0"
+            className="rounded-lg"
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <FormField
@@ -230,6 +232,8 @@ export const WidgetChatScreen = () => {
             </AIInputToolbar>
           </AIInput>
       </Form>
+      </div>
+      </div>
       </>
   )
 }

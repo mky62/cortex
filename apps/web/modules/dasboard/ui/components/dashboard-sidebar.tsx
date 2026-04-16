@@ -6,7 +6,6 @@ import {
     CreditCardIcon,
     LayoutDashboardIcon,
     PaletteIcon,
-    SettingsIcon,
     InboxIcon,
     LibraryBigIcon,
     Mic
@@ -17,11 +16,9 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -194,9 +191,9 @@ export default function DashboardSidebar() {
                   appearance={{
                     elements: {
                         rootBox: "w-full! h-8!",
-                        userButtonTrigger: "w-full! p-2! hover:bg-sidebar-accent! hover:text-sidebar-accent-foregrounf! group-data-[collapsible=icon]:size-8! group-data-[collapisble=icon]:p-2! ",
+                        userButtonTrigger: "w-full! p-2! hover:bg-sidebar-accent! hover:text-sidebar-accent-foreground! group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! ",
                         userButtonBox: "w-full! flex-row-reverse justify-start! gap-2! group-data-[collapsible=icon]:justify-center!",
-                        userButtonIdentifier: "hidden! group-data-[collapsible=icon]:block! text-sm! font-medium! text-sidebar-foreground!",
+                        userButtonIdentifier: "text-sm! font-medium! text-sidebar-foreground! group-data-[collapsible=icon]:hidden!",
                         userButtonAvatarBox: "size-4 rounded-sm!"
                     }
                   }}  />          
@@ -208,5 +205,4 @@ export default function DashboardSidebar() {
   )
 }   
           
-
 

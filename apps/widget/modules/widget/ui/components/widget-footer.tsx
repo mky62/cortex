@@ -11,22 +11,29 @@ export function WidgetFooter() {
     const setScreen = useSetAtom(screenAtom)
 
   return (
-    <footer
-      className='flex items-center justify-between p-4 border-t'>
-        <Button
-          className='h-12 p-1 rounded'
-          onClick={() => setScreen("selection")}
-          variant="ghost">
-     <HomeIcon
-          className={cn("size-5", screen === "selection" && "text-primary")}
-        />
-          </Button>
-          <Button
-          onClick={() => setScreen("inbox")}>
-           <InboxIcon
-           className={cn("size-5", screen === "inbox" && "text-primary" )} />
-          </Button>
-        
-      </footer>
+    <footer className='grid grid-cols-2 gap-2 border-t bg-background p-2'>
+      <Button
+        aria-label="Home"
+        className={cn(
+          'h-10 rounded-md text-muted-foreground',
+          screen === "selection" && "bg-primary/10 text-primary"
+        )}
+        onClick={() => setScreen("selection")}
+        variant="ghost"
+      >
+        <HomeIcon className="size-5" />
+      </Button>
+      <Button
+        aria-label="Inbox"
+        className={cn(
+          'h-10 rounded-md text-muted-foreground',
+          screen === "inbox" && "bg-primary/10 text-primary"
+        )}
+        onClick={() => setScreen("inbox")}
+        variant="ghost"
+      >
+        <InboxIcon className="size-5" />
+      </Button>
+    </footer>
   )
 }
