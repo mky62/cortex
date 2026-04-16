@@ -69,9 +69,11 @@ export const ConversationIdView = ({
     await createMessage({
       conversationId,
       prompt: data.message,
-    })
+    });
+
+    form.reset();
    } catch (error) {
-    console.error(error)
+    
    }
   }
   

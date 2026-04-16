@@ -1,10 +1,54 @@
 import { ConvexError, v } from "convex/values"
 import { paginationOptsValidator } from "convex/server"
 import type { MessageDoc } from "@convex-dev/agent"
-
-import { query } from "../_generated/server.js"
+import { mutation, query } from "../_generated/server.js"
 import { supportAgent } from "../system/ai/agents/supportAgent.js"
 
+export const updateStatus = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    status: v.union(
+      v.literal("unresolved"),
+      v.literal("escalated"),
+      v.literal("resolved")
+    ),
+  },f
+
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Unauthorized",
+      })
+    }
+
+    const orgId = identity.orgId as string | undefined
+
+    if (!orgId) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Missing organization",
+      })
+    }
+
+    const conversation = await ctx.db.get(args.conversationId)
+
+    if (!conversation || conversation.organizationId !== orgId) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Conversation not found",
+      })
+    }
+
+    await ctx.db.patch(args.conversationId, {
+      status: args.status,
+    })
+
+    return conversation
+  },
+})
 export const getOne = query({
   args: {
     conversationId: v.id("conversations"),
