@@ -1,10 +1,53 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "../_generated/server.js";
+import { action,mutation, query } from "../_generated/server.js";
 import { supportAgent} from "../system/ai/agents/supportAgent.js";
 import { paginationOptsValidator } from "convex/server";
 import { saveMessage } from "@convex-dev/agent";
-import { components, internal } from "../_generated/api";
+import { components , internal} from "../_generated/api";
+import { generateText } from "ai"
+import { OPERATOR_MESSAGE_ENHANCEMENT_PROMPT } from "../system/ai/constants";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 
+export const enhanceResponse = action({
+  args: {
+    prompt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (identity === null) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Identity not found",
+      });
+    }
+
+    const orgId = identity.orgId as string;
+
+    if (!orgId) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Organization not found",
+      });
+    }
+
+    const response = await generateText({
+      model: openrouter.chat("openai/gpt-4o-mini"),
+     messages: [
+        {
+          role: "system",
+          content: OPERATOR_MESSAGE_ENHANCEMENT_PROMPT,
+        },
+        {
+          role: "user",
+          content: args.prompt,
+        },
+      ],
+    });
+
+    return response.text;
+  },
+});
 
 export const create = mutation({
     args: {

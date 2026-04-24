@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll"
 import { ConversationStatusButton } from "../components/conversation-status-button";
 import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react"
 import { Id } from "@workspace/backend/convex/_generated/dataModel"
@@ -38,6 +39,7 @@ import { AIResponse } from "@workspace/ui/components/ai/response"
 import { zodResolver } from "@hookform/resolvers/zod"
  import { useForm } from "react-hook-form"
  import * as z from "zod"
+import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
 
  const formSchema = z.object({
   message: z.string().min(1, "Message is required")
@@ -59,6 +61,17 @@ export const ConversationIdView = ({
     conversation?.threadId ? { threadId: conversation.threadId } : "skip",
     { initialNumItems : 10}
   )
+
+  const {
+    topElementRef,
+    handleLoadMore,
+    canLoadMore,
+    isLoadingMore,
+  } = useInfiniteScroll({
+    status: messages.status,
+    loadMore: messages.loadMore,
+    loadSize: 10,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -134,11 +147,17 @@ if (conversation === undefined || messages.status === "LoadingFirstPage") {
       </div>
       <AIConversation className="flex-1 overflow-hidden">
           <AIConversationContent>
-            { toUIMessages(messages.results ?? [])?.map((message) => (
-              <AIMessage
-                 from={message.role === "user" ? "assistant" : "user"}
-                 key={message.id}
-              >
+            <InfiniteScrollTrigger 
+              onLoadMore={handleLoadMore}
+              canLoadMore={canLoadMore}
+              isLoadingMore={isLoadingMore}
+              ref={topElementRef}
+            />
+              { toUIMessages(messages.results ?? [])?.map((message) => (
+                <AIMessage
+                   from={message.role === "user" ? "assistant" : "user"}
+                   key={message.id}
+                >
                 <AIMessageContent>
                   <AIResponse>
                     {message.text}

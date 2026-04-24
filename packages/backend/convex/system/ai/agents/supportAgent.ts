@@ -3,6 +3,7 @@ import type { ActionCtx } from "../../../_generated/server.js";
 import { Agent } from "@convex-dev/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { ConvexError } from "convex/values";
+import { SUPPORT_AGENT_PROMPT } from "../constants.js";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -14,7 +15,7 @@ export const supportAgent = new Agent(components.agent, {
   callSettings: {
     maxOutputTokens: 1024,
   },
-  instructions: "You are a support agent. Help the user with their queries."
+ instructions: SUPPORT_AGENT_PROMPT, 
 });
 
 const isOpenRouterAuthError = (error: unknown) => {
