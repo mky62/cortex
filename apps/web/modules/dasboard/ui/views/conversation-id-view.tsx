@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react";
+import { ConversationStatusButton } from "../components/conversation-status-button";
 import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react"
 import { Id } from "@workspace/backend/convex/_generated/dataModel"
-import { useAction, useMutation, useQuery } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@workspace/backend/convex/_generated/api"
 import { Button } from "@workspace/ui/components/button"
 import { MoreHorizontalIcon , MessageCircleIcon, Wand2Icon } from "lucide-react"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   AIConversation,
   AIConversationContent,
@@ -26,6 +29,8 @@ import {
   AIMessageContent,
 
 } from "@workspace/ui/components/ai/message"
+
+import { Skeleton } from "@workspace/ui/components/skeleton";
 
 import { AIResponse } from "@workspace/ui/components/ai/response"
 
@@ -76,16 +81,56 @@ export const ConversationIdView = ({
     
    }
   }
+
+const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const updateConversationStatus = useMutation(api.private.conversations.updateStatus);
+  const handleToggleStatus = async () => {
+    if (!conversation) {
+      return;
+    }
+
+    setIsUpdatingStatus(true);
+
+    let newStatus: "unresolved" | "resolved" | "escalated";
+
+    // Cycle through states: unresolved -> escalated -> resolved -> unresolved
+    if (conversation.status === "unresolved") {
+      newStatus = "escalated";
+    } else if (conversation.status === "escalated") {
+      newStatus = "resolved"
+    } else {
+      newStatus = "unresolved"
+    }
+
+    try {
+      await updateConversationStatus({
+        conversationId,
+        status: newStatus,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
   
-  const contactName = conversation?.contactSession?.name ?? "Conversation"
+if (conversation === undefined || messages.status === "LoadingFirstPage") {
+    return <ConversationIdViewLoading />
+  }
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-muted">
       <div className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
-        <p className="min-w-0 truncate text-sm font-medium">{contactName}</p>
         <Button size="sm" variant="ghost">
           <MoreHorizontalIcon className="size-4" />
         </Button>
+         {!!conversation && (
+          <ConversationStatusButton
+            onClick={handleToggleStatus}
+            status={conversation.status}
+            disabled={isUpdatingStatus}
+          />
+        )}
       </div>
       <AIConversation className="flex-1 overflow-hidden">
           <AIConversationContent>
@@ -151,3 +196,50 @@ export const ConversationIdView = ({
     </div>
   )
 }
+
+export const ConversationIdViewLoading = () => {
+  return (
+    <div className="flex h-full flex-col bg-muted">
+      <header className="flex items-center justify-between border-b bg-background p-2.5">
+        <Button disabled size="sm" variant="ghost">
+          <MoreHorizontalIcon />
+        </Button>
+      </header>
+      <AIConversation className="max-h-[calc(100vh-180px)]">
+        <AIConversationContent>
+          {Array.from({ length: 8 }, (_, index) => {
+            const isUser = index % 2 === 0;
+            const widths = ["w-48", "w-60", "w-72"];
+            const width = widths[index % widths.length];
+
+            return (
+              <div
+                className={cn(
+                  "group flex w-full items-end justify-end gap-2 py-2 [&>div]:max-w-[80%]",
+                  isUser ? "is-user" : "is-assistant flex-row-reverse"
+                )}
+                key={index}
+              >
+                <Skeleton className={`h-9 ${width} rounded-lg bg-neutral-200`} />
+                <Skeleton className="size-8 rounded-full bg-neutral-200" />
+              </div>
+            );
+          })}
+        </AIConversationContent>
+      </AIConversation>
+
+      <div className="p-2">
+        <AIInput>
+          <AIInputTextarea
+            disabled
+            placeholder="Type your response as an operator..."
+          />
+          <AIInputToolbar>
+            <AIInputTools />
+            <AIInputSubmit disabled status="ready" />
+          </AIInputToolbar>
+        </AIInput>
+      </div>
+    </div>
+  );
+};
