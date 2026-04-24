@@ -33,9 +33,11 @@ declare const fullApi: ApiFromModules<{
   contactSesisons: typeof contactSesisons;
   "private/conversations": typeof private_conversations;
   "private/messages": typeof private_messages;
+  "private/messages/enhanceResponse" : typeof private_messages,
   "public/contactSessions": typeof public_contactSessions;
   "public/conversations": typeof public_conversations;
   "public/messages": typeof public_messages;
+
   "public/organizations": typeof public_organizations;
   "system/ai/agents/supportAgent": typeof system_ai_agents_supportAgent;
   "system/ai/constants": typeof system_ai_constants;

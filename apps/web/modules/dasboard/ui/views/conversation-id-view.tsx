@@ -5,11 +5,12 @@ import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll"
 import { ConversationStatusButton } from "../components/conversation-status-button";
 import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react"
 import { Id } from "@workspace/backend/convex/_generated/dataModel"
-import { useMutation, useQuery } from "convex/react"
+import { useMutation, useQuery, useAction } from "convex/react"
 import { api } from "@workspace/backend/convex/_generated/api"
 import { Button } from "@workspace/ui/components/button"
 import { MoreHorizontalIcon , MessageCircleIcon, Wand2Icon } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { toast } from "sonner";
 import {
   AIConversation,
   AIConversationContent,
@@ -80,6 +81,23 @@ export const ConversationIdView = ({
     },
   })
 
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const enhanceResponse = useAction(api.private.messages.enhanceResponse);
+  const handleEnhanceResponse = async () => {
+    setIsEnhancing(true);
+    const currentValue = form.getValues("message");
+
+    try {
+      const response = await enhanceResponse({ prompt: currentValue });
+
+      form.setValue("message", response);
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+    } finally {
+      setIsEnhancing(false);
+    }
+  }
   const createMessage = useMutation(api.private.messages.create)
 
   const onsubmit = async (data: z.infer<typeof formSchema>) => {
@@ -202,7 +220,13 @@ if (conversation === undefined || messages.status === "LoadingFirstPage") {
             )} />
             <AIInputToolbar />
             <AIInputTools>
-              <AIInputButton>
+              <AIInputButton
+              onClick={handleEnhanceResponse}
+              disabled={
+                conversation?.status === "resolved" || form.formState.isSubmitting || isEnhancing
+              }
+              >
+
                 <Wand2Icon className="size-4" />
               </AIInputButton>
             </AIInputTools>
