@@ -2,7 +2,7 @@
 
 import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react"
 import { Id } from "@workspace/backend/convex/_generated/dataModel"
-import { useAction, useQuery } from "convex/react"
+import { useAction, useMutation, useQuery } from "convex/react"
 import { api } from "@workspace/backend/convex/_generated/api"
 import { Button } from "@workspace/ui/components/button"
 import { MoreHorizontalIcon , MessageCircleIcon, Wand2Icon } from "lucide-react"
@@ -35,7 +35,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
  import * as z from "zod"
 
  const formSchema = z.object({
-  message: z.string().min(1, "Message is required"),
+  message: z.string().min(1, "Message is required")
  })
 
 export const ConversationIdView = ({
@@ -62,7 +62,7 @@ export const ConversationIdView = ({
     },
   })
 
-  const createMessage = useAction(api.private.messages.create)
+  const createMessage = useMutation(api.private.messages.create)
 
   const onsubmit = async (data: z.infer<typeof formSchema>) => {
    try {
@@ -91,7 +91,7 @@ export const ConversationIdView = ({
           <AIConversationContent>
             { toUIMessages(messages.results ?? [])?.map((message) => (
               <AIMessage
-                 from={message.role === "user" ? "user" : "assistant"}
+                 from={message.role === "user" ? "assistant" : "user"}
                  key={message.id}
               >
                 <AIMessageContent>

@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { action, query } from "../_generated/server.js";
 import { internal } from "../_generated/api.js";
-import { supportAgent } from "../system/ai/agents/supportAgent.js";
+import { generateSupportText, supportAgent } from "../system/ai/agents/supportAgent.js";
 import { paginationOptsValidator } from "convex/server";
 
 
@@ -39,6 +39,13 @@ export const create = action({
                 message: "conversation not found"
             })
         }
+
+        if (conversation.contactSessionId !== args.contactSessionId) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Unauthorized"
+            })
+        }
          
 
         if ( conversation.status === "resolved"){
@@ -48,7 +55,7 @@ export const create = action({
             });
         }
 
-        await supportAgent.generateText(
+        await generateSupportText(
             ctx,
           { threadId: args.threadId },
           {
@@ -74,6 +81,18 @@ export const getMany = query({
             throw new ConvexError ({
                 code: "UNAUTHORIZED",
                 message: "Invalid Session",
+            });
+        }
+
+        const conversation = await ctx.db
+            .query("conversations")
+            .withIndex("by_thread_id", (q) => q.eq("threadId", args.threadId))
+            .first();
+
+        if (!conversation || conversation.contactSessionId !== args.contactSessionId) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Unauthorized"
             });
         }
 

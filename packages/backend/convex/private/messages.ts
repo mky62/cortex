@@ -1,11 +1,12 @@
 import { ConvexError, v } from "convex/values";
-import { action, query } from "../_generated/server.js";
-import { internal } from "../_generated/api.js";
-import { supportAgent } from "../system/ai/agents/supportAgent.js";
+import { mutation, query } from "../_generated/server.js";
+import { supportAgent} from "../system/ai/agents/supportAgent.js";
 import { paginationOptsValidator } from "convex/server";
+import { saveMessage } from "@convex-dev/agent";
+import { components, internal } from "../_generated/api";
 
 
-export const create = action({
+export const create = mutation({
     args: {
         prompt: v.string(),
         conversationId: v.id("conversations"),
@@ -29,10 +30,7 @@ export const create = action({
             })
         }
 
-        const conversation = await ctx.runQuery(
-            internal.system.conversations.getById,
-            { conversationId: args.conversationId }
-        );
+        const conversation = await ctx.db.get(args.conversationId);
 
         if (!conversation) {
             throw new ConvexError({
@@ -44,7 +42,7 @@ export const create = action({
         if (conversation.organizationId !== organizationId) {
             throw new ConvexError({
                 code: "UNAUTHORIZED",
-                message: "Unauthorized"
+                message: "invalid orgId"
             })
         }
 
@@ -55,11 +53,23 @@ export const create = action({
             });
         }
 
-        await supportAgent.generateText(
-            ctx,
-            { threadId: conversation.threadId },
-            { prompt: args.prompt }
-        )
+         if (conversation.status === "unresolved") {
+           await ctx.db.patch(args.conversationId, {
+                status: "escalated",
+            });
+        }
+
+
+        await saveMessage(ctx, components.agent, {
+        threadId: conversation.threadId,
+        agentName: identity.familyName,
+        message: {
+            role: "assistant",
+            content: args.prompt,
+        },
+        });
+
+
     }
 });
 
@@ -90,7 +100,7 @@ export const getMany = query({
     const conversation = await ctx.db
         .query("conversations")
         .withIndex("by_thread_id", (q) => q.eq("threadId", args.threadId))
-        .first();
+        .unique();
 
     if (!conversation) {
         throw new ConvexError({

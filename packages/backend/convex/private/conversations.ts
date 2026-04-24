@@ -12,7 +12,7 @@ export const updateStatus = mutation({
       v.literal("escalated"),
       v.literal("resolved")
     ),
-  },f
+  },
 
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -82,6 +82,7 @@ export const getOne = query({
     }
 
     const contactSession = await ctx.db.get(conversation.contactSessionId)
+
 
     return {
       ...conversation,
