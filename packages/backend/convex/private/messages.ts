@@ -6,7 +6,7 @@ import { saveMessage } from "@convex-dev/agent";
 import { components , internal} from "../_generated/api";
 import { generateText } from "ai"
 import { OPERATOR_MESSAGE_ENHANCEMENT_PROMPT } from "../system/ai/constants";
-import { openrouter } from "@openrouter/ai-sdk-provider";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 export const enhanceResponse = action({
   args: {
@@ -31,6 +31,11 @@ export const enhanceResponse = action({
       });
     }
 
+    const openrouter = createOpenRouter({
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
+
+  
     const response = await generateText({
       model: openrouter.chat("openai/gpt-4o-mini"),
      messages: [
