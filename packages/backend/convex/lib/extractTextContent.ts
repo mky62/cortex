@@ -4,6 +4,10 @@ import type { StorageActionWriter } from "convex/server";
 import { assert } from "convex-helpers";
 import { Id } from "../_generated/dataModel";
 
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
+
 const AI_MODELS = {
   image: openai.chat("gpt-4o-mini"),
   pdf: openai.chat("gpt-4o"),
