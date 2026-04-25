@@ -9,9 +9,9 @@ const openrouter = createOpenRouter({
 });
 
 const AI_MODELS = {
-  image: openrouter.chat("openai/gpt-4o-mini"),
-  pdf: openrouter.chat("openai/gpt-4o"),
-  html: openrouter.chat("openai/gpt-4o"),
+  image: openrouter.chat("qwen/qwen3.6-plus"),
+  pdf: openrouter.chat("qwen/qwen3.6-plus"),
+  html: openrouter.chat("qwen/qwen3.6-plus"),
 } as const;
 
 const SUPPORTED_IMAGE_TYPES = [

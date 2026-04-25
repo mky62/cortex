@@ -118,7 +118,8 @@ export const ConversationIdView = ({
 
     form.reset();
    } catch (error) {
-    
+    toast.error("Failed to send message");
+    console.error(error);
    }
   }
 
