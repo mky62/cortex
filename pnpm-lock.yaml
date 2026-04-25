@@ -205,6 +205,9 @@ importers:
       '@openrouter/ai-sdk-provider':
         specifier: ^2.8.0
         version: 2.8.0(ai@6.0.158(zod@4.3.6))(zod@4.3.6)
+      '@vapi-ai/server-sdk':
+        specifier: ^1.2.0
+        version: 1.2.0
       ai:
         specifier: ^6.0.158
         version: 6.0.158(zod@4.3.6)
@@ -2766,6 +2769,10 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+
+  '@vapi-ai/server-sdk@1.2.0':
+    resolution: {integrity: sha512-0Ys/MEs+JoxmKQ/bTzMHUCJvzEWu+/XcFiN2m/GjTqVB2Uwv8Vi91D1/YGbRUH+q1aCBSH3g+yIOFroDDlJF1A==}
+    engines: {node: '>=18.0.0'}
 
   '@vapi-ai/web@2.5.2':
     resolution: {integrity: sha512-mT4DjApi0/0+EK77h2xOLq3qVBa7rv3JNQ+gFWuhFE4YdGYxI51+fn8bQI9N535+zU/Z4jFKXotdBHQJ3filHA==}
@@ -8588,6 +8595,8 @@ snapshots:
       eslint-visitor-keys: 4.2.1
 
   '@ungap/structured-clone@1.3.0': {}
+
+  '@vapi-ai/server-sdk@1.2.0': {}
 
   '@vapi-ai/web@2.5.2':
     dependencies:

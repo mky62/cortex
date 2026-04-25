@@ -4,6 +4,7 @@ import "@workspace/ui/globals.css"
 import Providers from "@/components/providers"
 import { cn } from "@workspace/ui/lib/utils";
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from "@workspace/ui/components/sonner";
 
 const fontSans = Geist({
   subsets: ["latin"],
