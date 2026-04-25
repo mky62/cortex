@@ -83,14 +83,23 @@ export const ConversationIdView = ({
 
   const [isEnhancing, setIsEnhancing] = useState(false);
   const enhanceResponse = useAction(api.private.messages.enhanceResponse);
+  const messageValue = form.watch("message");
+  const isComposerDisabled =
+    conversation?.status === "resolved" || form.formState.isSubmitting;
+  const hasMessage = messageValue.trim().length > 0;
+
   const handleEnhanceResponse = async () => {
+    if (!hasMessage) {
+      return;
+    }
+
     setIsEnhancing(true);
     const currentValue = form.getValues("message");
 
     try {
       const response = await enhanceResponse({ prompt: currentValue });
 
-      form.setValue("message", response);
+      form.setValue("message", response, { shouldDirty: true, shouldValidate: true });
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -202,9 +211,7 @@ if (conversation === undefined || messages.status === "LoadingFirstPage") {
             name="message"
             render={({ field }) => (
               <AIInputTextarea
-                disabled={
-                  conversation?.status === "resolved" || form.formState.isSubmitting
-                }
+                disabled={isComposerDisabled}
                 onChange={field.onChange}
                 onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -218,21 +225,20 @@ if (conversation === undefined || messages.status === "LoadingFirstPage") {
                 value={field.value}
               />
             )} />
-            <AIInputToolbar />
-            <AIInputTools>
-              <AIInputButton
-              onClick={handleEnhanceResponse}
-              disabled={
-                conversation?.status === "resolved" || form.formState.isSubmitting || isEnhancing
-              }
-              >
-
-                <Wand2Icon className="size-4" />
-              </AIInputButton>
-            </AIInputTools>
-            <AIInputSubmit 
-            disabled={conversation?.status === "resolved" || form.formState.isSubmitting}
-            />
+            <AIInputToolbar>
+              <AIInputTools>
+                <AIInputButton
+                  disabled={isComposerDisabled || isEnhancing || !hasMessage}
+                  onClick={handleEnhanceResponse}
+                >
+                  <Wand2Icon className="size-4" />
+                </AIInputButton>
+              </AIInputTools>
+              <AIInputSubmit 
+                disabled={isComposerDisabled || isEnhancing || !hasMessage}
+                status={form.formState.isSubmitting ? "submitted" : "ready"}
+              />
+            </AIInputToolbar>
             </AIInput>
           </Form>
         </div>

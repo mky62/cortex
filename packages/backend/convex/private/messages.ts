@@ -37,7 +37,8 @@ export const enhanceResponse = action({
 
   
     const response = await generateText({
-      model: openrouter.chat("openai/gpt-4o-mini"),
+      model: openrouter.chat("qwen/qwen3.6-plus"),
+      maxOutputTokens: 1024,
      messages: [
         {
           role: "system",

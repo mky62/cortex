@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import type { StorageActionWriter } from "convex/server";
 import { assert } from "convex-helpers";
@@ -9,9 +9,9 @@ const openrouter = createOpenRouter({
 });
 
 const AI_MODELS = {
-  image: openai.chat("gpt-4o-mini"),
-  pdf: openai.chat("gpt-4o"),
-  html: openai.chat("gpt-4o"),
+  image: openrouter.chat("openai/gpt-4o-mini"),
+  pdf: openrouter.chat("openai/gpt-4o"),
+  html: openrouter.chat("openai/gpt-4o"),
 } as const;
 
 const SUPPORTED_IMAGE_TYPES = [
@@ -109,7 +109,7 @@ async function extractPdfText(
       {
         role: "user",
         content: [
-          { type: "file", data: new URL(url), mimeType, filename },
+          { type: "file", data: new URL(url), mediaType: mimeType, filename },
           {
             type: "text",
             text: "Extract the text from the PDF and print it without explaining you'll do so.",
