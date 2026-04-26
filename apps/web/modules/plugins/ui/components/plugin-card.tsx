@@ -1,4 +1,4 @@
-import { ArrowLeftRightIcon, type LucideIcon, PlugIcon } from "lucide-react";
+import { ArrowLeftRightIcon, Badge, Balloon, type LucideIcon, PlugIcon } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@workspace/ui/components/button";
 
@@ -27,13 +27,14 @@ export const PluginCard = ({
     <div className="h-fit w-full rounded-lg border bg-background p-8">
       <div className="mb-6 flex items-center justify-center gap-6">
         <div className="flex flex-col items-center">
-          <Image
+          {/* <Image
             alt={serviceName}
             className="rounded object-contain"
             height={40}
             width={40}
             src={serviceImage}
-          />
+          /> */}
+            <Balloon/>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -41,13 +42,7 @@ export const PluginCard = ({
         </div>
 
         <div className="flex flex-col items-center">
-          <Image
-            alt="Platform"
-            className="object-contain"
-            height={40}
-            width={40}
-            src="/logo.svg"
-          />
+          <Badge>{serviceName}</Badge>
         </div>
       </div>
 
@@ -75,7 +70,7 @@ export const PluginCard = ({
 
       <div className="text-center">
         <Button
-          className="size-full"
+          className="size-full text-xl p-2 hover:scale-[1.02] transition-transform"
           disabled={isDisabled}
           onClick={onSubmit}
           variant="default"

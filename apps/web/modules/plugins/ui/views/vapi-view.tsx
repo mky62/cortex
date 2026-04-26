@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  Badge,
   GlobeIcon,
   PhoneCallIcon,
   PhoneIcon,
   WorkflowIcon,
+  
 } from "lucide-react";
 import { type Feature, PluginCard } from "../components/plugin-card";
 import { useMutation, useQuery } from "convex/react";
@@ -230,7 +232,7 @@ export const VapiView = () => {
               <VapiConnectedView onDisconnect={toggleConnection} />
             ) : (
               <PluginCard
-                serviceImage="/vapi.jpg"
+                serviceImage="/vapi-logo.png"
                 serviceName="Vapi"
                 features={vapiFeatures}
                 isDisabled={vapiPlugin === undefined}

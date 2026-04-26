@@ -2,6 +2,7 @@
 
 import { BotIcon, PhoneIcon, SettingsIcon, UnplugIcon } from "lucide-react";
 import Image from "next/image";
+import { Balloon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
@@ -33,13 +34,14 @@ export const VapiConnectedView = ({ onDisconnect }: VapiConnectedViewProps) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Image
+              {/* <Image
                 alt="Vapi"
                 className="rounded-lg object-contain"
                 height={48}
                 width={48}
                 src="/vapi.jpg"
-              />
+              /> */}
+              <Balloon />
               <div>
                 <CardTitle>Vapi Integration</CardTitle>
                 <CardDescription>
