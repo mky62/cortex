@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend API Reference — Cortex Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+    <div class="content">
+      <h1>Backend API Reference</h1>
+      <p>The Convex backend exposes two API surfaces (private and public) plus an internal system layer.</p>
+
+      <h2>API Layer Overview</h2>
+      <div class="mermaid">
+flowchart TD
+    subgraph Clients
+        Web["Web Dashboard<br/>(Clerk Auth)"]
+        Widget["Widget App<br/>(Contact Session)"]
+    end
+
+    subgraph Private["🔒 private/ (Authenticated)"]
+        PC["conversations<br/>getOne, getMany, updateStatus"]
+        PM["messages<br/>create, getMany, enhanceResponse"]
+        PF["files<br/>addFile, deleteFile, list"]
+        PP["plugins<br/>getOne, remove"]
+        PS["secrets<br/>upsert"]
+        PV["vapi<br/>getAssistants, getPhoneNumbers"]
+        PW["widgetSettings<br/>upsert, getOne"]
+    end
+
+    subgraph Public["🌍 public/ (Unauthenticated)"]
+        PUC["conversations<br/>create, createVoice, updateVoiceTranscript,<br/>completeVoiceConversation, getOne, getMany"]
+        PUM["messages<br/>create, getMany"]
+        PUCS["contactSessions<br/>validate"]
+        PUO["organizations<br/>validate"]
+        PUS["secrets<br/>getVapiSecrets"]
+        PUW["widgetSettings<br/>getByOrganizationId"]
+    end
+
+    subgraph System["⚙️ system/ (Internal)"]
+        SC["conversations<br/>escalate, resolve, getByThreadId, getById"]
+        SCS["contactSessions<br/>getOne"]
+        SP["plugins<br/>upsert, getByOrganizationIdAndService"]
+        SS["secrets<br/>upsert (AWS)"]
+    end
+
+    Web -->|Clerk identity| Private
+    Widget -->|contactSession| Public
+    Private --> System
+    Public --> System
+      </div>
+
+      <h2>Private API (convex/private/)</h2>
+      <p>Authenticated via Clerk. All endpoints verify <code>ctx.auth.getUserIdentity()</code> and scope by <code>identity.orgId</code>. Used by the <strong>web dashboard</strong>.</p>
+
+      <h3>Conversations</h3>
+
+      <h4>private.conversations.getOne</h4>
+      <p>Get a single conversation with contact session details.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>conversationId: Id&lt;"conversations"&gt;</code></li>
+        <li><strong>Returns</strong>: Conversation + contactSession object</li>
+      </ul>
+
+      <h4>private.conversations.getMany</h4>
+      <p>List conversations with pagination, optional status filter, and last message.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>status?: "unresolved" | "escalated" | "resolved"</code>, <code>paginationOpts</code></li>
+        <li><strong>Returns</strong>: Paginated list with <code>contactSession</code> and <code>lastMessage</code> per conversation</li>
+      </ul>
+
+      <h4>private.conversations.updateStatus</h4>
+      <p>Change conversation status.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>conversationId: Id&lt;"conversations"&gt;</code>, <code>status: "unresolved" | "escalated" | "resolved"</code></li>
+        <li><strong>Returns</strong>: Updated conversation</li>
+      </ul>
+
+      <h3>Messages</h3>
+
+      <h4>private.messages.create</h4>
+      <p>Send an operator message. Auto-escalates if conversation is unresolved. Only works for chat conversations (with threadId).</p>
+      <ul>
+        <li><strong>Args</strong>: <code>prompt: string</code>, <code>conversationId: Id&lt;"conversations"&gt;</code></li>
+        <li><strong>Side effects</strong>: Sets status to "escalated" if currently "unresolved"</li>
+      </ul>
+
+      <h4>private.messages.getMany</h4>
+      <p>List messages for a thread.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>threadId: string</code>, <code>paginationOpts</code></li>
+        <li><strong>Returns</strong>: Paginated message list from agent thread</li>
+      </ul>
+
+      <h4>private.messages.enhanceResponse</h4>
+      <p>AI-enhance an operator's draft message using OpenRouter (qwen3.6-plus).</p>
+      <ul>
+        <li><strong>Args</strong>: <code>prompt: string</code></li>
+        <li><strong>Returns</strong>: Enhanced message text</li>
+      </ul>
+
+      <h3>Files</h3>
+
+      <h4>private.files.addFile</h4>
+      <p>Upload a file to the knowledge base. Extracts text, indexes via RAG, stores in Convex storage.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>filename: string</code>, <code>mimeType: string</code>, <code>bytes: ArrayBuffer</code>, <code>category?: string</code></li>
+        <li><strong>Returns</strong>: <code>{ url: string, entryId: EntryId }</code></li>
+      </ul>
+
+      <h4>private.files.deleteFile</h4>
+      <p>Remove a file from the knowledge base and storage.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>entryId: EntryId</code></li>
+      </ul>
+
+      <h4>private.files.list</h4>
+      <p>List files in the organization's knowledge base.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>category?: string</code>, <code>paginationOpts</code></li>
+        <li><strong>Returns</strong>: Paginated list of <code>PublicFile</code> objects</li>
+      </ul>
+
+      <h3>Plugins</h3>
+
+      <h4>private.plugins.getOne</h4>
+      <p>Get a plugin by service type.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>service: "vapi"</code></li>
+        <li><strong>Returns</strong>: Plugin record or null</li>
+      </ul>
+
+      <h4>private.plugins.remove</h4>
+      <p>Remove a plugin.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>service: "vapi"</code></li>
+      </ul>
+
+      <h3>Secrets</h3>
+
+      <h4>private.secrets.upsert</h4>
+      <p>Store API credentials for a service. Delegates to system layer which stores in AWS Secrets Manager.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>service: "vapi"</code>, <code>value: any</code></li>
+        <li><strong>Side effects</strong>: Creates/updates AWS secret + plugin record</li>
+      </ul>
+
+      <h3>Vapi</h3>
+
+      <h4>private.vapi.getAssistants</h4>
+      <p>List Vapi assistants for the organization.</p>
+      <ul>
+        <li><strong>Returns</strong>: <code>Vapi.Assistant[]</code></li>
+      </ul>
+
+      <h4>private.vapi.getPhoneNumbers</h4>
+      <p>List Vapi phone numbers for the organization.</p>
+      <ul>
+        <li><strong>Returns</strong>: <code>Vapi.ListPhoneNumbersResponseItem[]</code></li>
+      </ul>
+
+      <h3>Widget Settings</h3>
+
+      <h4>private.widgetSettings.upsert</h4>
+      <p>Create or update widget settings.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>greetMessage</code>, <code>defaultSuggestions</code>, <code>vapiSettings</code></li>
+      </ul>
+
+      <h4>private.widgetSettings.getOne</h4>
+      <p>Get widget settings for the current organization.</p>
+      <ul>
+        <li><strong>Returns</strong>: WidgetSettings or null</li>
+      </ul>
+
+      <h2>Public API (convex/public/)</h2>
+      <p>Unauthenticated. Validated via contact sessions. Used by the <strong>widget app</strong>.</p>
+
+      <h3>Conversations</h3>
+
+      <h4>public.conversations.create</h4>
+      <p>Create a new chat conversation. Creates an agent thread and sends the greeting message.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>organizationId: string</code>, <code>contactSessionId: Id&lt;"contactSessions"&gt;</code></li>
+        <li><strong>Returns</strong>: <code>Id&lt;"conversations"&gt;</code></li>
+      </ul>
+
+      <h4>public.conversations.createVoice</h4>
+      <p>Create a voice conversation (no thread, transcript stored directly).</p>
+      <ul>
+        <li><strong>Args</strong>: <code>organizationId: string</code>, <code>contactSessionId: Id&lt;"contactSessions"&gt;</code>, <code>callId?: string</code></li>
+        <li><strong>Returns</strong>: <code>Id&lt;"conversations"&gt;</code></li>
+      </ul>
+
+      <h4>public.conversations.updateVoiceTranscript</h4>
+      <p>Append a transcript entry to a voice conversation.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>conversationId</code>, <code>contactSessionId</code>, <code>role: "user" | "assistant"</code>, <code>text: string</code></li>
+      </ul>
+
+      <h4>public.conversations.completeVoiceConversation</h4>
+      <p>Mark a voice call as ended, calculate duration.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>conversationId</code>, <code>contactSessionId</code></li>
+      </ul>
+
+      <h4>public.conversations.getOne</h4>
+      <p>Get a conversation by ID (session-scoped).</p>
+      <ul>
+        <li><strong>Args</strong>: <code>conversationId</code>, <code>contactSessionId</code></li>
+      </ul>
+
+      <h4>public.conversations.getMany</h4>
+      <p>List conversations for a contact session.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>contactSessionId</code>, <code>paginationOpts</code></li>
+      </ul>
+
+      <h3>Messages</h3>
+
+      <h4>public.messages.create</h4>
+      <p>Send a customer message and trigger the AI agent.</p>
+      <ul>
+        <li><strong>Args</strong>: <code>prompt: string</code>, <code>threadId: string</code>, <code>contactSessionId: Id&lt;"contactSessions"&gt;</code></li>
+      </ul>
+      <div class="card">
+        <div class="card-title">Behavior</div>
+        <p>Validates session + conversation → Calls <code>generateSupportText</code> (saves AI response to thread) → If conversation is "unresolved", also runs agent with tools (escalate/resolve) → If conversation is "escalated", just saves the user message.</p>
+      </div>
+
+      <h4>public.messages.getMany</h4>
+      <p>List messages for a thread (session-scoped).</p>
+      <ul>
+        <li><strong>Args</strong>: <code>threadId</code>, <code>contactSessionId</code>, <code>paginationOpts</code></li>
+      </ul>
+
+      <h3>Other Public Endpoints</h3>
+      <table>
+        <thead><tr><th>Endpoint</th><th>Args</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>public.contactSessions.validate</code></td><td><code>contactSessionId</code></td><td>Check if session is valid and not expired</td></tr>
+          <tr><td><code>public.organizations.validate</code></td><td><code>organizationId</code></td><td>Verify org exists via Clerk API</td></tr>
+          <tr><td><code>public.secrets.getVapiSecrets</code></td><td><code>organizationId</code></td><td>Get Vapi public API key (only)</td></tr>
+          <tr><td><code>public.widgetSettings.getByOrganizationId</code></td><td><code>organizationId</code></td><td>Get widget settings for an org</td></tr>
+        </tbody>
+      </table>
+
+      <h2>System Layer (convex/system/)</h2>
+      <p>Internal-only functions. Cannot be called from clients.</p>
+      <table>
+        <thead><tr><th>Function</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>system.conversations.escalate</code></td><td>internalMutation</td><td>Set conversation status to "escalated" by threadId</td></tr>
+          <tr><td><code>system.conversations.resolve</code></td><td>internalMutation</td><td>Set conversation status to "resolved" by threadId</td></tr>
+          <tr><td><code>system.conversations.getByThreadId</code></td><td>internalQuery</td><td>Get conversation by threadId</td></tr>
+          <tr><td><code>system.conversations.getById</code></td><td>internalQuery</td><td>Get conversation by ID</td></tr>
+          <tr><td><code>system.contactSessions.getOne</code></td><td>internalQuery</td><td>Get contact session by ID</td></tr>
+          <tr><td><code>system.plugins.upsert</code></td><td>internalMutation</td><td>Create/update plugin record</td></tr>
+          <tr><td><code>system.plugins.getByOrganizationIdAndService</code></td><td>internalQuery</td><td>Get plugin by org + service</td></tr>
+          <tr><td><code>system.secrets.upsert</code></td><td>internalAction</td><td>Store secret in AWS + create plugin record</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="nav.js"></script>
+</body>
+</html>

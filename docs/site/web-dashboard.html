@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Dashboard — Cortex Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+    <div class="content">
+      <h1>Web Dashboard</h1>
+      <p>The operator dashboard at <code>apps/web</code> (port 3000).</p>
+
+      <h2>Overview</h2>
+      <ul>
+        <li><strong>Authentication</strong>: Clerk with organization scoping</li>
+        <li><strong>Convex integration</strong>: <code>ConvexProviderWithClerk</code> — Clerk identity maps to Convex auth</li>
+        <li><strong>Layout</strong>: Collapsible sidebar + main content area</li>
+      </ul>
+
+      <h2>Providers</h2>
+      <pre><code>// apps/web/components/providers.tsx
+&lt;ClerkProvider&gt;
+  &lt;ConvexProviderWithClerk client={convex} useAuth={useAuth}&gt;
+    {children}
+  &lt;/ConvexProviderWithClerk&gt;
+&lt;/ClerkProvider&gt;</code></pre>
+
+      <h2>Middleware</h2>
+      <p>Defined in <code>apps/web/proxy.ts</code> (Clerk middleware).</p>
+      <ul>
+        <li><strong>Public routes</strong>: <code>/sign-in</code>, <code>/sign-up</code>, <code>/sign-out</code></li>
+        <li><strong>Protected routes</strong>: All others require authentication</li>
+        <li><strong>Org enforcement</strong>: If user has no <code>orgId</code>, redirects to <code>/org-selection</code></li>
+      </ul>
+
+      <h2>Routes</h2>
+      <table>
+        <thead><tr><th>Route</th><th>View</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>/</code></td><td>Page</td><td>Home (placeholder with user list)</td></tr>
+          <tr><td><code>/sign-in</code></td><td>SignInView</td><td>Clerk sign-in</td></tr>
+          <tr><td><code>/sign-up</code></td><td>SignUpView</td><td>Clerk sign-up</td></tr>
+          <tr><td><code>/org-selection</code></td><td>OrgSelectionView</td><td>Organization picker</td></tr>
+          <tr><td><code>/conversations</code></td><td>ConversationsView</td><td>Conversation list + detail</td></tr>
+          <tr><td><code>/conversations/[id]</code></td><td>ConversationIdView</td><td>Single conversation</td></tr>
+          <tr><td><code>/files</code></td><td>FilesView</td><td>Knowledge base file manager</td></tr>
+          <tr><td><code>/customization</code></td><td>CustomizationView</td><td>Widget settings form</td></tr>
+          <tr><td><code>/integrations</code></td><td>—</td><td>Integrations page</td></tr>
+          <tr><td><code>/plugins/vapi</code></td><td>VapiView</td><td>Vapi plugin management</td></tr>
+          <tr><td><code>/billing</code></td><td>—</td><td>Billing page</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Layouts</h2>
+
+      <h3>Dashboard Layout</h3>
+      <div class="mermaid">
+graph LR
+    subgraph DashboardLayout
+        AG["AuthGuard"]
+        OG["OrganizationGuard"]
+        Jotai["Jotai Provider"]
+        SB["SidebarProvider"]
+        Sidebar["DashboardSidebar<br/>(collapsible)"]
+        Main["Main Content"]
+    end
+
+    AG --> OG --> Jotai --> SB
+    SB --> Sidebar
+    SB --> Main
+      </div>
+
+      <h3>Conversations Layout</h3>
+      <div class="mermaid">
+graph LR
+    subgraph Desktop["Desktop (lg+)"]
+        Panel["ConversationsPanel<br/>(360px)"]
+        Detail["Conversation Detail<br/>(flex-1)"]
+    end
+
+    subgraph Mobile["Mobile"]
+        PanelM["ConversationsPanel<br/>(full width)"]
+        DetailM["Conversation Detail<br/>(full width)"]
+    end
+
+    Panel --> Detail
+    PanelM -.->|"on /conversations"| DetailM
+      </div>
+
+      <h2>Sidebar</h2>
+      <p>Defined in <code>apps/web/modules/dasboard/ui/components/dashboard-sidebar.tsx</code>.</p>
+
+      <div class="mermaid">
+graph TB
+    subgraph Sidebar
+        Header["OrganizationSwitcher<br/>(Clerk)"]
+        CS["Customer Support"]
+        CS1["Conversations<br/>/conversations"]
+        CS2["Knowledge Base<br/>/files"]
+        Config["Configuration"]
+        C1["Customization<br/>/customization"]
+        C2["Integrations<br/>/integrations"]
+        C3["Voice Assistant<br/>/plugins/vapi"]
+        Acct["Account"]
+        A1["Plans & Billing<br/>/billing"]
+        Footer["UserButton<br/>(Clerk)"]
+    end
+
+    Header --> CS --> CS1 & CS2
+    CS --> Config --> C1 & C2 & C3
+    Config --> Acct --> A1
+    Acct --> Footer
+      </div>
+
+      <p><strong>Features</strong>: Collapsible (icon-only mode), Organization switcher (Clerk), User button (Clerk), Active route highlighting with blue gradient.</p>
+
+      <h2>Key Views</h2>
+
+      <h3>Conversations Panel</h3>
+      <ul>
+        <li>Status filter dropdown (All / Escalated / Resolved / Unresolved)</li>
+        <li>Stored in localStorage via <code>statusFilterAtom</code> (Jotai <code>atomWithStorage</code>)</li>
+        <li>Each conversation shows: country flag, contact name, last message preview, status badge</li>
+        <li>Country detected from timezone/locale metadata</li>
+        <li>Infinite scroll pagination</li>
+      </ul>
+
+      <h3>Conversation Detail</h3>
+      <ul>
+        <li>Thread messages with <code>useThreadMessages</code> hook</li>
+        <li><strong>Status toggle button</strong>: Cycles unresolved → escalated → resolved → unresolved</li>
+        <li><strong>AI Enhance button</strong> (Wand2 icon): Sends draft to <code>enhanceResponse</code> action</li>
+        <li>Disabled input when conversation is resolved</li>
+        <li>Loading skeleton state</li>
+      </ul>
+
+      <h3>Files View</h3>
+      <ul>
+        <li>Table with Name, Type, Size, Actions columns</li>
+        <li>Upload dialog (file dropzone)</li>
+        <li>Delete dialog with confirmation</li>
+        <li>RAG-indexed — uploaded files become searchable by the AI agent</li>
+      </ul>
+
+      <h3>Customization View</h3>
+      <p>Form with two cards:</p>
+      <ol>
+        <li><strong>General Chat Settings</strong>: Greeting message, 3 suggestion inputs</li>
+        <li><strong>Voice Assistant Settings</strong> (only shown if Vapi plugin connected):
+          <ul>
+            <li>Assistant dropdown (fetched from Vapi API)</li>
+            <li>Phone number dropdown (fetched from Vapi API)</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3>Vapi Plugin View</h3>
+      <div class="mermaid">
+stateDiagram-v2
+    [*] --> NotConnected : No vapi plugin
+    NotConnected --> ConnectDialog : Click "Connect"
+    ConnectDialog --> Connected : Submit API keys
+    Connected --> DisconnectDialog : Click "Disconnect"
+    DisconnectDialog --> NotConnected : Confirm disconnect
+      </div>
+      <ul>
+        <li><strong>Not connected</strong>: Shows <code>PluginCard</code> with features list + connect button</li>
+        <li><strong>Connected</strong>: Shows <code>VapiConnectedView</code> with assistants/phone numbers tabs + disconnect button</li>
+        <li><strong>Connect flow</strong>: Dialog with public + private API key inputs → stored in AWS Secrets Manager</li>
+        <li><strong>Disconnect flow</strong>: Confirmation dialog → removes plugin record</li>
+      </ul>
+
+      <h2>State Management</h2>
+      <table>
+        <thead><tr><th>Atom</th><th>Storage</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>statusFilterAtom</code></td><td>localStorage</td><td>Conversation list status filter</td></tr>
+        </tbody>
+      </table>
+      <p>Jotai <code>Provider</code> wraps the dashboard layout to isolate atom state.</p>
+    </div>
+  </main>
+  <script src="nav.js"></script>
+</body>
+</html>

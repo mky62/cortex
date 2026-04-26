@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture — Cortex Docs</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div id="sidebar-placeholder"></div>
+
+    <main class="main">
+      <div class="content">
+        <h1>Architecture Overview</h1>
+        <p>
+          Cortex is an AI-powered customer support platform that enables
+          organizations to provide chat and voice support through an embeddable
+          widget, managed via an operator dashboard.
+        </p>
+
+        <h2>High-Level Architecture</h2>
+        <div class="mermaid">
+graph TB
+  subgraph Frontend
+    Web["🌐 Web Dashboard<br/>Operator UI<br/>Port 3000"]
+    Widget["💬 Widget App<br/>Customer UI<br/>Port 3001"]
+  end
+  subgraph AuthLayer["Auth"]
+    Clerk["🔐 Clerk<br/>Org-scoped"]
+    Session["🎫 Contact Session<br/>24h expiry"]
+  end
+  subgraph Convex["Convex Backend"]
+    Private["🔒 private/<br/>Authenticated"]
+    Public["🌍 public/<br/>Unauthenticated"]
+    System["⚙️ system/<br/>Internal"]
+    AI["🤖 AI Agent + RAG"]
+  end
+  AWS["🔒 AWS Secrets Manager"]
+  Web -->|Clerk Auth| Clerk
+  Widget -->|No Auth| Session
+  Clerk --> Private
+  Session --> Public
+  Private --> System
+  Public --> System
+  Private --> AI
+  Public --> AI
+  System --> AWS
+  AI --> AWS
+        </div>
+
+        <h2>Monorepo Structure</h2>
+        <div class="mermaid">
+graph LR
+  subgraph Apps
+    Web["apps/web<br/>Operator Dashboard<br/>Next.js 16 + Clerk"]
+    Widget["apps/widget<br/>Customer Widget<br/>Next.js 16"]
+  end
+  subgraph Packages
+    Backend["packages/backend<br/>Convex Backend"]
+    UI["packages/ui<br/>shadcn/ui<br/>70+ components"]
+    Math["packages/math<br/>Math utilities"]
+    ESLint["packages/eslint-config"]
+    TSConfig["packages/typescript-config"]
+  end
+  Web --> Backend
+  Web --> UI
+  Web --> Math
+  Widget --> Backend
+  Widget --> UI
+  Widget --> Math
+  Backend --> UI
+        </div>
+
+        <h2>Tech Stack</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Technology</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Framework</td>
+              <td>Next.js 16 (Turbopack)</td>
+            </tr>
+            <tr>
+              <td>Language</td>
+              <td>TypeScript 5.9</td>
+            </tr>
+            <tr>
+              <td>Database</td>
+              <td>Convex (realtime, serverless)</td>
+            </tr>
+            <tr>
+              <td>Auth</td>
+              <td>Clerk (organization-based)</td>
+            </tr>
+            <tr>
+              <td>AI Agent</td>
+              <td>@convex-dev/agent</td>
+            </tr>
+            <tr>
+              <td>RAG</td>
+              <td>@convex-dev/rag</td>
+            </tr>
+            <tr>
+              <td>LLM Gateway</td>
+              <td>OpenRouter (gpt-4o-mini, qwen3.6-plus)</td>
+            </tr>
+            <tr>
+              <td>Vision/OCR</td>
+              <td>Google Gemini 2.0 Flash</td>
+            </tr>
+            <tr>
+              <td>Voice AI</td>
+              <td>Vapi (Web SDK + Server SDK)</td>
+            </tr>
+            <tr>
+              <td>Secrets</td>
+              <td>AWS Secrets Manager</td>
+            </tr>
+            <tr>
+              <td>State</td>
+              <td>Jotai (atoms, atomWithStorage)</td>
+            </tr>
+            <tr>
+              <td>Forms</td>
+              <td>react-hook-form + zod</td>
+            </tr>
+            <tr>
+              <td>UI</td>
+              <td>shadcn/ui + Tailwind CSS 4</td>
+            </tr>
+            <tr>
+              <td>Build</td>
+              <td>Turborepo + pnpm</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Data Flow</h2>
+        <div class="mermaid">
+sequenceDiagram
+  participant C as Customer
+  participant W as Widget
+  participant CVX as Convex
+  participant AI as AI Agent
+  participant RAG as Knowledge Base
+  participant O as Operator
+
+  C->>W: Opens widget
+  W->>CVX: Validate org + session
+  W->>CVX: Create contact session
+  C->>W: Sends message
+  W->>CVX: public.messages.create
+  CVX->>AI: generateSupportText
+  AI-->>CVX: AI response saved to thread
+
+  alt Status is "unresolved"
+    CVX->>AI: Agent with tools
+    AI->>RAG: searchTool
+    RAG-->>AI: Search results
+    AI->>CVX: escalateConversation or resolveConversation
+  end
+
+  CVX-->>W: Real-time message update
+  W-->>C: Shows AI response
+
+  Note over O,CVX: Operator picks up escalated conversation
+  O->>CVX: private.messages.create
+  CVX-->>W: Real-time message update
+  W-->>C: Shows operator response
+        </div>
+
+        <h2>Two-App Design</h2>
+
+        <h3>Web Dashboard (apps/web)</h3>
+        <ul>
+          <li>
+            <strong>Users</strong>: Organization operators (support agents)
+          </li>
+          <li><strong>Auth</strong>: Clerk with organization scoping</li>
+          <li>
+            <strong>Purpose</strong>: View conversations, respond to customers,
+            manage knowledge base, configure widget, connect integrations
+          </li>
+        </ul>
+
+        <h3>Widget App (apps/widget)</h3>
+        <ul>
+          <li><strong>Users</strong>: End customers/visitors</li>
+          <li>
+            <strong>Auth</strong>: None — uses contact sessions (24h expiry)
+          </li>
+          <li>
+            <strong>Purpose</strong>: Chat with AI, voice calls, view
+            conversation history, contact phone support
+          </li>
+          <li>
+            <strong>Embedding</strong>: Loaded via
+            <code>?organizationId=&lt;org_id&gt;</code> query parameter
+          </li>
+        </ul>
+
+        <h2>Backend 3-Layer Pattern</h2>
+        <p>The Convex backend uses a strict 3-layer API pattern:</p>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>🔒 private/</strong>
+            Authenticated endpoints requiring Clerk identity + org membership.
+            Used by the web dashboard.
+          </div>
+          <div class="feature-item">
+            <strong>🌍 public/</strong>
+            Unauthenticated endpoints validated via contact sessions. Used by
+            the widget.
+          </div>
+          <div class="feature-item">
+            <strong>⚙️ system/</strong>
+            Internal-only functions (internalQuery, internalMutation,
+            internalAction). Never exposed to clients.
+          </div>
+        </div>
+
+        <blockquote>
+          <p>
+            This separation ensures operators never access the public API,
+            customers never access the private API, and internal
+            mutations/queries are protected from direct client invocation.
+          </p>
+        </blockquote>
+      </div>
+    </main>
+    <script src="nav.js"></script>
+  </body>
+</html>

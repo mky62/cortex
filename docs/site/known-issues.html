@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Known Issues — Cortex Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+    <div class="content">
+      <h1>Known Issues</h1>
+
+      <h2>Bug Severity Overview</h2>
+      <div class="mermaid">
+graph LR
+    subgraph High["🔴 High Severity"]
+        B1["#1 Stale Closure in useVapi"]
+        B5["#5 call-end Uses Stale conversationId"]
+    end
+
+    subgraph Medium["🟡 Medium Severity"]
+        B4["#4 Hardcoded User Data"]
+    end
+
+    subgraph Low["🟢 Low Severity"]
+        B2["#2 Duplicate setVapi Call"]
+        B3["#3 Wrong Loading Variable"]
+    end
+
+    B1 -.->|"same root cause"| B5
+      </div>
+
+      <h2>Bugs</h2>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="badge badge-high">🔴 HIGH</span>
+          <span class="bug-title">#1 Stale Closure in useVapi Hook</span>
+        </div>
+        <div class="bug-file">apps/widget/modules/widget/hooks/use-vapi.ts</div>
+        <p>The <code>useEffect</code> at line 42 has an empty dependency array <code>[]</code>, but references <code>conversationId</code>, <code>contactSessionId</code>, and <code>organizationId</code> inside event handlers. This means:</p>
+        <ul>
+          <li><code>call-end</code> handler will try to complete a voice conversation using a <strong>stale</strong> <code>conversationId</code> (likely <code>null</code> since it's set after the effect runs)</li>
+          <li><code>message</code> handler will try to update transcript with a <strong>stale</strong> <code>conversationId</code></li>
+          <li>The Vapi instance is never recreated when <code>vapiSecrets</code> changes</li>
+        </ul>
+        <p><strong>Fix</strong>: Add proper dependencies to the useEffect, or use refs for values that change during the call lifecycle.</p>
+      </div>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="badge badge-low">🟢 LOW</span>
+          <span class="bug-title">#2 Duplicate setVapi Call</span>
+        </div>
+        <div class="bug-file">apps/widget/modules/widget/hooks/use-vapi.ts:49-51</div>
+        <pre><code>setVapi(vapiInstance);  // line 49
+setVapi(vapiInstance);  // line 51 — duplicate</code></pre>
+        <p>Causes an unnecessary re-render.</p>
+      </div>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="badge badge-low">🟢 LOW</span>
+          <span class="bug-title">#3 Wrong Loading Variable in Phone Number Placeholder</span>
+        </div>
+        <div class="bug-file">apps/web/modules/customizations/ui/components/vapi-form-fields.tsx:88</div>
+        <p>The phone number select placeholder uses <code>assistantsLoading</code> instead of <code>phoneNumbersLoading</code>:</p>
+        <pre><code>placeholder={
+  assistantsLoading        // ← should be phoneNumbersLoading
+    ? "Loading phone numbers..."
+    : "Select a phone number"
+}</code></pre>
+      </div>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="badge badge-medium">🟡 MEDIUM</span>
+          <span class="bug-title">#4 Hardcoded User Data in add Mutation</span>
+        </div>
+        <div class="bug-file">packages/backend/convex/users.ts:35-38</div>
+        <p>The <code>add</code> mutation ignores the Clerk identity and inserts hardcoded values:</p>
+        <pre><code>const users = await ctx.db.insert("users", {
+    name: "John Doe",           // ← should use identity.name
+    tokenIdentifier: "1234567890", // ← should use identity.tokenIdentifier
+});</code></pre>
+        <p>Also, the mutation fetches <code>orgId</code> from identity but never uses it.</p>
+      </div>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="badge badge-high">🔴 HIGH</span>
+          <span class="bug-title">#5 call-end Uses Stale conversationId</span>
+        </div>
+        <div class="bug-file">apps/widget/modules/widget/hooks/use-vapi.ts:80</div>
+        <p>When the call ends, the handler reads <code>conversationId</code> from state, but due to the stale closure, this will be <code>null</code> (the initial value). The <code>completeVoiceConversation</code> mutation will never be called.</p>
+        <p><strong>Fix</strong>: Use a ref to track the current conversationId, or restructure the effect.</p>
+      </div>
+
+      <h2>Typos / Naming</h2>
+      <table>
+        <thead><tr><th>Location</th><th>Current</th><th>Should Be</th></tr></thead>
+        <tbody>
+          <tr><td><code>packages/backend/convex/contactSesisons.ts</code></td><td><code>contactSesisons</code></td><td><code>contactSessions</code></td></tr>
+          <tr><td><code>apps/web/modules/dasboard/</code></td><td><code>dasboard</code></td><td><code>dashboard</code></td></tr>
+          <tr><td><code>apps/widget/modules/widget/ui/views/widegt-view.tsx</code></td><td><code>widegt-view</code></td><td><code>widget-view.tsx</code></td></tr>
+          <tr><td><code>apps/widget/modules/widget/constants.ts:12</code></td><td><code>echo_contact_sesison</code></td><td><code>echo_contact_session</code></td></tr>
+          <tr><td><code>packages/backend/convex/contactSesisons.ts:59</code></td><td><code>COntact session expired</code></td><td><code>Contact session expired</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Security Considerations</h2>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="bug-title">Public API Key Exposure</span>
+        </div>
+        <div class="bug-file">packages/backend/convex/public/secrets.ts</div>
+        <p>The <code>getVapiSecrets</code> action returns the Vapi <strong>public API key</strong> to unauthenticated users. This is by design (the widget needs it to initialize Vapi), but ensure the public key has appropriate rate limits and restrictions in the Vapi dashboard.</p>
+      </div>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="bug-title">No Rate Limiting on Public Endpoints</span>
+        </div>
+        <p>Public endpoints (contact session creation, message sending, conversation creation) have no rate limiting. A malicious user could:</p>
+        <ul>
+          <li>Flood conversations</li>
+          <li>Spam messages</li>
+          <li>Create many contact sessions</li>
+        </ul>
+        <p>Consider adding rate limiting via Convex or a CDN/WAF layer.</p>
+      </div>
+
+      <div class="bug-item">
+        <div class="bug-header">
+          <span class="bug-title">Contact Session Reuse</span>
+        </div>
+        <p>Contact session IDs are stored in localStorage. If a user clears localStorage after 24h, the session expires gracefully. However, a sophisticated user could manipulate the stored session ID to potentially access another visitor's conversations (though session IDs are random Convex IDs, making this impractical).</p>
+      </div>
+
+      <h2>Missing Features / TODOs</h2>
+      <ol>
+        <li><strong>No conversation search</strong> — Operators cannot search conversations by content</li>
+        <li><strong>No file categories UI</strong> — The backend supports file categories but the UI doesn't expose filtering</li>
+        <li><strong>No billing page</strong> — Route exists but no content</li>
+        <li><strong>No integrations page</strong> — Route exists but no content</li>
+        <li><strong>Voice conversations are view-only in widget inbox</strong> — Cannot reopen or continue a voice conversation</li>
+        <li><strong>No operator assignment</strong> — Conversations aren't assigned to specific operators</li>
+        <li><strong>No typing indicators</strong> — No real-time typing status between customer and operator</li>
+        <li><strong>No file attachments in chat</strong> — Only text messages supported</li>
+        <li><strong>No conversation export</strong> — Cannot export conversation history</li>
+        <li><strong>users table is essentially unused</strong> — The schema exists but the add mutation is broken and no queries use it meaningfully</li>
+      </ol>
+    </div>
+  </main>
+  <script src="nav.js"></script>
+</body>
+</html>

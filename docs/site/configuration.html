@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configuration — Cortex Docs</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+      <div class="content">
+        <h1>Configuration &amp; Environment</h1>
+
+        <h2>Environment Variables</h2>
+
+        <h3>apps/web/.env</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXT_PUBLIC_CONVEX_URL</code></td>
+              <td>Yes</td>
+              <td>Convex deployment URL</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code></td>
+              <td>Yes</td>
+              <td>Clerk frontend publishable key</td>
+            </tr>
+            <tr>
+              <td><code>CLERK_SECRET_KEY</code></td>
+              <td>Yes</td>
+              <td>Clerk backend secret key</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_CLERK_SIGN_IN_URL</code></td>
+              <td>No</td>
+              <td>Sign-in URL path</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_CLERK_SIGN_UP_URL</code></td>
+              <td>No</td>
+              <td>Sign-up URL path</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>apps/widget/.env</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXT_PUBLIC_CONVEX_URL</code></td>
+              <td>Yes</td>
+              <td>Convex deployment URL</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>packages/backend/.env.local</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CLERK_JWT_ISSUER_DOMAIN</code></td>
+              <td>Yes</td>
+              <td>Clerk JWT issuer for Convex auth</td>
+            </tr>
+            <tr>
+              <td><code>CLERK_SECRET_KEY</code></td>
+              <td>Yes</td>
+              <td>Clerk backend secret key</td>
+            </tr>
+            <tr>
+              <td><code>OPENROUTER_API_KEY</code></td>
+              <td>Yes</td>
+              <td>OpenRouter API key (LLM gateway)</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_GENERATIVE_AI_API_KEY</code></td>
+              <td>Yes</td>
+              <td>Google AI API key (Gemini for file extraction)</td>
+            </tr>
+            <tr>
+              <td><code>AWS_REGION</code></td>
+              <td>Yes</td>
+              <td>AWS region for Secrets Manager</td>
+            </tr>
+            <tr>
+              <td><code>AWS_ACCESS_KEY_ID</code></td>
+              <td>Yes</td>
+              <td>AWS access key</td>
+            </tr>
+            <tr>
+              <td><code>AWS_SECRET_ACCESS_KEY</code></td>
+              <td>Yes</td>
+              <td>AWS secret key</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Convex Configuration</h2>
+
+        <h3>convex.config.ts</h3>
+        <pre><code>const app = defineApp();
+app.use(agent);  // @convex-dev/agent — AI agent framework
+app.use(rag);    // @convex-dev/rag — knowledge base with vector search</code></pre>
+
+        <h3>auth.config.ts</h3>
+        <p>Clerk-based authentication:</p>
+        <pre><code>{
+  providers: [{
+    domain: process.env.CLERK_JWT_ISSUER_DOMAIN!,
+    applicationID: "convex",
+  }]
+}</code></pre>
+
+        <h2>Turborepo Configuration</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Depends On</th>
+              <th>Cached</th>
+              <th>Persistent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>build</code></td>
+              <td><code>^build</code></td>
+              <td>Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td><code>lint</code></td>
+              <td><code>^lint</code></td>
+              <td>Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td><code>format</code></td>
+              <td><code>^format</code></td>
+              <td>Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td><code>typecheck</code></td>
+              <td><code>^typecheck</code></td>
+              <td>Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td><code>dev</code></td>
+              <td>—</td>
+              <td>No</td>
+              <td>Yes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Development Commands</h2>
+        <pre><code># Start all apps in dev mode
+pnpm dev
+
+# Build all packages
+pnpm build
+
+# Lint all packages
+pnpm lint
+
+# Type check all packages
+pnpm typecheck
+
+# Format all files
+pnpm format
+
+# Start Convex backend only
+cd packages/backend && pnpm dev
+
+# Deploy Convex to production
+cd packages/backend && npx convex deploy</code></pre>
+
+        <h2>External Service Setup</h2>
+
+        <h3>Clerk</h3>
+        <ol>
+          <li>Create a Clerk application</li>
+          <li>Enable organizations</li>
+          <li>
+            Set <code>CLERK_JWT_ISSUER_DOMAIN</code> to your Clerk Frontend API
+            URL
+          </li>
+          <li>Configure Convex auth provider with Clerk</li>
+        </ol>
+
+        <h3>Vapi</h3>
+        <ol>
+          <li>Create a Vapi account</li>
+          <li>Create an assistant and/or get a phone number</li>
+          <li>
+            In the dashboard, connect Vapi via the Plugins page (enter API keys)
+          </li>
+        </ol>
+
+        <h3>OpenRouter</h3>
+        <ol>
+          <li>Create an OpenRouter account</li>
+          <li>Get an API key</li>
+          <li>Set <code>OPENROUTER_API_KEY</code> in Convex environment</li>
+        </ol>
+
+        <h3>Google AI</h3>
+        <ol>
+          <li>Create a Google Cloud project</li>
+          <li>Enable Generative AI API</li>
+          <li>Get an API key</li>
+          <li>
+            Set <code>GOOGLE_GENERATIVE_AI_API_KEY</code> in Convex environment
+          </li>
+        </ol>
+
+        <h3>AWS Secrets Manager</h3>
+        <ol>
+          <li>Create an IAM user with Secrets Manager permissions</li>
+          <li>
+            Set <code>AWS_REGION</code>, <code>AWS_ACCESS_KEY_ID</code>,
+            <code>AWS_SECRET_ACCESS_KEY</code> in Convex environment
+          </li>
+          <li>
+            Secrets are created automatically with the pattern:
+            <code>tenant/{orgId}/{service}</code>
+          </li>
+        </ol>
+      </div>
+    </main>
+    <script src="nav.js"></script>
+  </body>
+</html>
