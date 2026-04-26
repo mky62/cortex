@@ -1,0 +1,11 @@
+{
+  "name": "docs",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 3002 --directory ../../docs/site",
+    "build": "echo 'No build required'",
+    "start": "npx serve docs/site -l 3002"
+  }
+}

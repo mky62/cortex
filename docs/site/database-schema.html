@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Schema — Cortex Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+    <div class="content">
+      <h1>Database Schema</h1>
+      <p>Convex database with 5 tables. All multi-tenant data is scoped by <code>organizationId</code>.</p>
+
+      <h2>Entity Relationship Diagram</h2>
+      <div class="mermaid">
+erDiagram
+    widgetSettings ||--o| organizations : "belongs to"
+    plugins ||--o| organizations : "belongs to"
+    conversations ||--o| organizations : "belongs to"
+    conversations }o--|| contactSessions : "has"
+    contactSessions ||--o| organizations : "belongs to"
+    users ||--o| organizations : "belongs to"
+
+    widgetSettings {
+        string organizationId PK
+        string greetMessage
+        object defaultSuggestions
+        object vapiSettings
+    }
+
+    plugins {
+        string organizationId PK
+        string service PK
+        string secretName
+    }
+
+    conversations {
+        string threadId FK
+        string organizationId PK
+        id contactSessionId FK
+        string status
+        string type
+        array voiceTranscript
+        object voiceMetadata
+    }
+
+    contactSessions {
+        string name
+        string email
+        string organizationId PK
+        number expiresAt
+        object metadata
+    }
+
+    users {
+        string name
+        string tokenIdentifier PK
+    }
+      </div>
+
+      <h2>Status Lifecycle</h2>
+      <div class="mermaid">
+stateDiagram-v2
+    [*] --> unresolved : Conversation created
+    unresolved --> escalated : AI escalates / Operator responds
+    escalated --> resolved : Operator resolves / AI resolves
+    resolved --> unresolved : Operator reopens
+    escalated --> escalated : Operator responds
+      </div>
+
+      <h2>widgetSettings</h2>
+      <p>Per-organization widget configuration.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>organizationId</code></td><td>string</td><td>Clerk organization ID</td></tr>
+          <tr><td><code>greetMessage</code></td><td>string</td><td>Initial greeting shown when chat opens</td></tr>
+          <tr><td><code>defaultSuggestions</code></td><td>object</td><td>Up to 3 quick-reply suggestions</td></tr>
+          <tr><td><code>defaultSuggestions.suggestion1</code></td><td>optional&lt;string&gt;</td><td>First suggestion</td></tr>
+          <tr><td><code>defaultSuggestions.suggestion2</code></td><td>optional&lt;string&gt;</td><td>Second suggestion</td></tr>
+          <tr><td><code>defaultSuggestions.suggestion3</code></td><td>optional&lt;string&gt;</td><td>Third suggestion</td></tr>
+          <tr><td><code>vapiSettings</code></td><td>object</td><td>Voice AI configuration</td></tr>
+          <tr><td><code>vapiSettings.assistantId</code></td><td>optional&lt;string&gt;</td><td>Vapi assistant ID for voice calls</td></tr>
+          <tr><td><code>vapiSettings.phoneNumber</code></td><td>optional&lt;string&gt;</td><td>Phone number displayed in widget</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Indexes:</strong> <code>by_organization_id</code> on <code>["organizationId"]</code></p>
+
+      <h2>plugins</h2>
+      <p>Service integrations per organization.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>organizationId</code></td><td>string</td><td>Clerk organization ID</td></tr>
+          <tr><td><code>service</code></td><td>union&lt;"vapi"&gt;</td><td>Plugin service type (extensible union)</td></tr>
+          <tr><td><code>secretName</code></td><td>string</td><td>AWS Secrets Manager secret path</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Indexes:</strong></p>
+      <ul>
+        <li><code>by_organization_id</code> on <code>["organizationId"]</code></li>
+        <li><code>by_organization_id_and_service</code> on <code>["organizationId", "service"]</code></li>
+      </ul>
+
+      <h2>conversations</h2>
+      <p>Support conversations (chat and voice).</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>threadId</code></td><td>optional&lt;string&gt;</td><td>Agent thread ID (chat conversations only)</td></tr>
+          <tr><td><code>organizationId</code></td><td>string</td><td>Owning organization</td></tr>
+          <tr><td><code>contactSessionId</code></td><td>id("contactSessions")</td><td>Associated contact session</td></tr>
+          <tr><td><code>status</code></td><td>union&lt;"unresolved", "escalated", "resolved"&gt;</td><td>Conversation status</td></tr>
+          <tr><td><code>type</code></td><td>optional&lt;union&lt;"chat", "voice"&gt;&gt;</td><td>Conversation type</td></tr>
+          <tr><td><code>voiceTranscript</code></td><td>optional&lt;array&lt;object&gt;&gt;</td><td>Voice call transcript entries</td></tr>
+          <tr><td><code>voiceTranscript[].role</code></td><td>union&lt;"user", "assistant"&gt;</td><td>Speaker role</td></tr>
+          <tr><td><code>voiceTranscript[].text</code></td><td>string</td><td>Transcribed text</td></tr>
+          <tr><td><code>voiceTranscript[].timestamp</code></td><td>number</td><td>Unix timestamp (ms)</td></tr>
+          <tr><td><code>voiceMetadata</code></td><td>optional&lt;object&gt;</td><td>Voice call metadata</td></tr>
+          <tr><td><code>voiceMetadata.callId</code></td><td>optional&lt;string&gt;</td><td>Vapi call ID</td></tr>
+          <tr><td><code>voiceMetadata.duration</code></td><td>optional&lt;number&gt;</td><td>Call duration in seconds</td></tr>
+          <tr><td><code>voiceMetadata.startedAt</code></td><td>optional&lt;number&gt;</td><td>Call start timestamp</td></tr>
+          <tr><td><code>voiceMetadata.endedAt</code></td><td>optional&lt;number&gt;</td><td>Call end timestamp</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Indexes:</strong></p>
+      <ul>
+        <li><code>by_organization_id</code> on <code>["organizationId"]</code></li>
+        <li><code>by_contact_session_id</code> on <code>["contactSessionId"]</code></li>
+        <li><code>by_thread_id</code> on <code>["threadId"]</code></li>
+        <li><code>by_status_and_organization_id</code> on <code>["status", "organizationId"]</code></li>
+      </ul>
+
+      <h2>contactSessions</h2>
+      <p>Temporary visitor sessions (24-hour expiry).</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>string</td><td>Visitor name</td></tr>
+          <tr><td><code>email</code></td><td>string</td><td>Visitor email</td></tr>
+          <tr><td><code>organizationId</code></td><td>string</td><td>Organization being contacted</td></tr>
+          <tr><td><code>expiresAt</code></td><td>number</td><td>Expiry timestamp (created + 24h)</td></tr>
+          <tr><td><code>metadata</code></td><td>optional&lt;object&gt;</td><td>Browser/device metadata</td></tr>
+          <tr><td><code>metadata.userAgent</code></td><td>optional&lt;string&gt;</td><td>Browser user agent</td></tr>
+          <tr><td><code>metadata.language</code></td><td>optional&lt;string&gt;</td><td>Primary language</td></tr>
+          <tr><td><code>metadata.languages</code></td><td>optional&lt;array&lt;string&gt;&gt;</td><td>All browser languages</td></tr>
+          <tr><td><code>metadata.screenResolution</code></td><td>optional&lt;string&gt;</td><td>Screen dimensions (e.g. "1920x1080")</td></tr>
+          <tr><td><code>metadata.viewportSize</code></td><td>optional&lt;string&gt;</td><td>Viewport dimensions</td></tr>
+          <tr><td><code>metadata.timezone</code></td><td>optional&lt;string&gt;</td><td>IANA timezone</td></tr>
+          <tr><td><code>metadata.timezoneOffset</code></td><td>optional&lt;number&gt;</td><td>UTC offset in minutes</td></tr>
+          <tr><td><code>metadata.cookieEnabled</code></td><td>optional&lt;boolean&gt;</td><td>Cookie support</td></tr>
+          <tr><td><code>metadata.referrer</code></td><td>optional&lt;string&gt;</td><td>Referrer URL</td></tr>
+          <tr><td><code>metadata.currentUrl</code></td><td>optional&lt;string&gt;</td><td>Current page URL</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Indexes:</strong></p>
+      <ul>
+        <li><code>by_organization_id</code> on <code>["organizationId"]</code></li>
+        <li><code>by_expires_at</code> on <code>["expiresAt"]</code></li>
+      </ul>
+
+      <h2>users</h2>
+      <p>Simple user records (currently minimal).</p>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>string</td><td>User display name</td></tr>
+          <tr><td><code>tokenIdentifier</code></td><td>string</td><td>Clerk token identifier</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Indexes:</strong> <code>by_token</code> on <code>["tokenIdentifier"]</code></p>
+
+      <blockquote>
+        <p><strong>Note:</strong> The <code>users</code> table is currently underutilized. The <code>add</code> mutation hardcodes values instead of using Clerk identity data.</p>
+      </blockquote>
+    </div>
+  </main>
+  <script src="nav.js"></script>
+</body>
+</html>

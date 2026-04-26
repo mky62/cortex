@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cortex — AI Customer Support Platform</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div id="sidebar-placeholder"></div>
+
+    <main class="main">
+      <div class="content">
+        <h1>Cortex Documentation</h1>
+        <p>
+          Documentation for the Cortex AI customer support platform — a monorepo
+          building an AI-powered customer support system with chat and voice
+          capabilities.
+        </p>
+
+        <h2>Quick Start</h2>
+        <pre><code># Install dependencies
+pnpm install
+
+# Start development
+pnpm dev
+
+# Web dashboard: http://localhost:3000
+# Widget: http://localhost:3001?organizationId=&lt;YOUR_ORG_ID&gt;</code></pre>
+
+        <h2>Documentation Index</h2>
+
+        <div class="feature-grid">
+          <a href="architecture.html" class="feature-item">
+            <i data-lucide="construction"></i>
+            <strong>Architecture Overview</strong>
+            High-level system design, monorepo structure, tech stack, data flow
+          </a>
+          <a href="database-schema.html" class="feature-item">
+            <i data-lucide="database"></i> <strong>Database Schema</strong>
+            5 Convex tables with ER diagram, field definitions, indexes
+          </a>
+          <a href="backend-api.html" class="feature-item">
+            <i data-lucide="plug"></i> <strong>Backend API Reference</strong>
+            Private, public, and system API layers with full endpoint docs
+          </a>
+          <a href="ai-system.html" class="feature-item">
+            <i data-lucide="bot"></i> <strong>AI System</strong>
+            Agent architecture, RAG pipeline, tools, message flows
+          </a>
+          <a href="widget-app.html" class="feature-item">
+            <i data-lucide="message-circle"></i> <strong>Widget App</strong>
+            Customer-facing widget: screens, state machine, hooks
+          </a>
+          <a href="web-dashboard.html" class="feature-item">
+            <i data-lucide="layout-dashboard"></i>
+            <strong>Web Dashboard</strong>
+            Operator dashboard: routes, layouts, views, state
+          </a>
+          <a href="configuration.html" class="feature-item">
+            <i data-lucide="settings"></i> <strong>Configuration</strong>
+            Environment variables, external service setup, dev commands
+          </a>
+          <a href="known-issues.html" class="feature-item">
+            <i data-lucide="bug"></i> <strong>Known Issues</strong>
+            5 bugs, typos, security considerations, missing features
+          </a>
+        </div>
+
+        <h2>Tech Stack at a Glance</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Technology</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Framework</td>
+              <td>Next.js 16 (Turbopack)</td>
+            </tr>
+            <tr>
+              <td>Language</td>
+              <td>TypeScript 5.9</td>
+            </tr>
+            <tr>
+              <td>Database</td>
+              <td>Convex (realtime, serverless)</td>
+            </tr>
+            <tr>
+              <td>Auth</td>
+              <td>Clerk (organization-based)</td>
+            </tr>
+            <tr>
+              <td>AI Agent</td>
+              <td>@convex-dev/agent + OpenRouter</td>
+            </tr>
+            <tr>
+              <td>RAG</td>
+              <td>@convex-dev/rag (text-embedding-3-small)</td>
+            </tr>
+            <tr>
+              <td>Vision/OCR</td>
+              <td>Google Gemini 2.0 Flash</td>
+            </tr>
+            <tr>
+              <td>Voice AI</td>
+              <td>Vapi (Web SDK + Server SDK)</td>
+            </tr>
+            <tr>
+              <td>Secrets</td>
+              <td>AWS Secrets Manager</td>
+            </tr>
+            <tr>
+              <td>State</td>
+              <td>Jotai (atoms, atomWithStorage)</td>
+            </tr>
+            <tr>
+              <td>UI</td>
+              <td>shadcn/ui + Tailwind CSS 4</td>
+            </tr>
+            <tr>
+              <td>Build</td>
+              <td>Turborepo + pnpm</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <script src="nav.js"></script>
+  </body>
+</html>

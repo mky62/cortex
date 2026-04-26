@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget App — Cortex Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+    <div class="content">
+      <h1>Widget App</h1>
+      <p>The customer-facing embeddable widget at <code>apps/widget</code> (port 3001).</p>
+
+      <h2>Overview</h2>
+      <ul>
+        <li><strong>No authentication</strong> — uses contact sessions (24h expiry) instead of Clerk</li>
+        <li><strong>State management</strong> — Jotai atoms for screen navigation and session data</li>
+        <li><strong>Entry point</strong> — <code>?organizationId=&lt;org_id&gt;</code> query parameter</li>
+      </ul>
+
+      <h2>Providers</h2>
+      <pre><code>// apps/widget/components/providers.tsx
+&lt;ConvexProvider client={convex}&gt;    // No Clerk — plain Convex provider
+  &lt;Provider&gt;                        // Jotai provider
+    {children}
+  &lt;/Provider&gt;
+&lt;/ConvexProvider&gt;</code></pre>
+
+      <h2>Screen State Machine</h2>
+      <div class="mermaid">
+stateDiagram-v2
+    [*] --> loading : Widget opens
+
+    loading --> auth : No valid session
+    loading --> selection : Valid session found
+    loading --> error : Org invalid / Settings missing
+
+    auth --> selection : Submit name + email
+
+    selection --> chat : Click "Chat with us"
+    selection --> voice : Click "Start voice call"\n(requires Vapi)
+    selection --> contact : Click "Call Us"\n(requires phone number)
+    selection --> inbox : Footer inbox button
+
+    chat --> selection : Back button
+    voice --> selection : Back button
+    contact --> selection : Back button
+    inbox --> selection : Back button
+
+    inbox --> chat : Select chat conversation
+
+    voice --> chat : End call → view transcript
+      </div>
+
+      <h2>Initialization Sequence</h2>
+      <div class="mermaid">
+sequenceDiagram
+    participant Widget as Widget View
+    participant Loading as Loading Screen
+    participant API as Convex Public API
+
+    Widget->>Loading: organizationId via URL
+
+    Note over Loading: Step 1: Validate Organization
+    Loading->>API: public.organizations.validate
+    API-->>Loading: valid / invalid
+
+    Note over Loading: Step 2: Check Session
+    alt Has stored session ID
+        Loading->>API: public.contactSessions.validate
+        API-->>Loading: valid / expired
+    else No stored session
+        Note over Loading: sessionValid = false
+    end
+
+    Note over Loading: Step 3: Load Widget Settings
+    Loading->>API: public.widgetSettings.getByOrganizationId
+    API-->>Loading: widgetSettings
+
+    Note over Loading: Step 4: Load Vapi Secrets
+    Loading->>API: public.secrets.getVapiSecrets
+    API-->>Loading: publicApiKey (or null)
+
+    alt Valid session
+        Loading->>Widget: Show "selection" screen
+    else No valid session
+        Loading->>Widget: Show "auth" screen
+    end
+      </div>
+
+      <h2>Atoms (State)</h2>
+      <p>Defined in <code>apps/widget/modules/widget/atoms/widget-atoms.ts</code>.</p>
+      <table>
+        <thead><tr><th>Atom</th><th>Type</th><th>Storage</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>screenAtom</code></td><td>WidgetScreen</td><td>Memory</td><td>Current screen</td></tr>
+          <tr><td><code>organizationIdAtom</code></td><td>string | null</td><td>Memory</td><td>Current org ID</td></tr>
+          <tr><td><code>errorMessageAtom</code></td><td>string | null</td><td>Memory</td><td>Error display</td></tr>
+          <tr><td><code>loadingMessageAtom</code></td><td>string | null</td><td>Memory</td><td>Loading status text</td></tr>
+          <tr><td><code>conversationIdAtom</code></td><td>Id&lt;"conversations"&gt; | null</td><td>Memory</td><td>Active conversation</td></tr>
+          <tr><td><code>contactSessionIdAtomFamily</code></td><td>Id&lt;"contactSessions"&gt; | null</td><td><strong>localStorage</strong></td><td>Per-org session ID</td></tr>
+          <tr><td><code>widgetSettingsAtom</code></td><td>Doc&lt;"widgetSettings"&gt; | null</td><td>Memory</td><td>Widget config</td></tr>
+          <tr><td><code>vapiSecretsAtom</code></td><td>{ publicApiKey: string } | null</td><td>Memory</td><td>Vapi credentials</td></tr>
+          <tr><td><code>hasVapiSecretsAtom</code></td><td>Derived</td><td>—</td><td>Whether voice is available</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Screens</h2>
+
+      <h3>Loading Screen</h3>
+      <p>Initialization sequence: validate org → check session → load settings → load vapi secrets → route to auth or selection.</p>
+
+      <h3>Auth Screen</h3>
+      <p>Collects <strong>name</strong> and <strong>email</strong> from visitor. Creates a <code>contactSession</code> with browser metadata (userAgent, timezone, screen size, etc.). Stores session ID in localStorage via <code>contactSessionIdAtomFamily</code>. Navigates to <code>selection</code>.</p>
+
+      <h3>Selection Screen</h3>
+      <p>Main menu with up to 3 options:</p>
+      <ol>
+        <li><strong>Chat with us</strong> — Always available. Creates a new chat conversation → navigates to <code>chat</code></li>
+        <li><strong>Start voice call</strong> — Only if <code>hasVapiSecrets &amp;&amp; vapiSettings.assistantId</code>. Navigates to <code>voice</code></li>
+        <li><strong>Call Us</strong> — Only if <code>hasVapiSecrets &amp;&amp; vapiSettings.phoneNumber</code>. Navigates to <code>contact</code></li>
+      </ol>
+
+      <h3>Chat Screen</h3>
+      <p>Displays thread messages via <code>useThreadMessages</code> hook. Supports infinite scroll (load older messages). Shows <strong>suggestion chips</strong> after the first (greeting) message. Sends messages via <code>public.messages.create</code> (triggers AI agent). Shows voice transcript for voice-type conversations. Disables input when conversation is resolved.</p>
+
+      <h3>Voice Screen</h3>
+      <p>Uses <code>useVapi</code> hook for Vapi Web SDK integration. Shows live transcript during call. Visual indicators: speaking (red pulse) vs listening (green). Start/end call buttons. Transcript persisted to backend via <code>updateVoiceTranscript</code>.</p>
+
+      <h3>Inbox Screen</h3>
+      <p>Paginated list of past conversations. Shows last message preview, conversation type (chat/voice), status. Click chat conversation → opens in <code>chat</code> screen. Voice conversations are view-only (disabled).</p>
+
+      <h3>Contact Screen</h3>
+      <p>Displays phone number from widget settings. Copy to clipboard button. "Call Now" button with <code>tel:</code> link.</p>
+
+      <h3>Error Screen</h3>
+      <p>Generic error display with <code>AlertTriangleIcon</code>. Shows <code>errorMessageAtom</code> value.</p>
+
+      <h2>useVapi Hook</h2>
+      <p>Defined in <code>apps/widget/modules/widget/hooks/use-vapi.ts</code>.</p>
+
+      <div class="card">
+        <div class="card-title">Returns</div>
+        <p><code>{ isSpeaking, isConnected, isConnecting, transcript, conversationId, startCall, endCall }</code></p>
+      </div>
+
+      <h3>Event Handlers</h3>
+      <ul>
+        <li><code>call-start</code> → Creates voice conversation in backend, sets <code>conversationId</code></li>
+        <li><code>call-end</code> → Calls <code>completeVoiceConversation</code> to record duration</li>
+        <li><code>speech-start/speech-end</code> → Toggles <code>isSpeaking</code></li>
+        <li><code>message</code> (final transcript) → Appends to local transcript + persists via <code>updateVoiceTranscript</code></li>
+      </ul>
+
+      <blockquote>
+        <p><strong>Known issue:</strong> The useEffect has an empty dependency array <code>[]</code> but references reactive values (<code>conversationId</code>, <code>contactSessionId</code>), causing stale closures. See <a href="known-issues.html">Known Issues</a>.</p>
+      </blockquote>
+
+      <h2>Widget Layout</h2>
+      <div class="mermaid">
+graph TB
+    subgraph Widget["Widget View"]
+        Header["WidgetHeader<br/>(blue gradient)"]
+        Content["Screen Content<br/>(flexible height)"]
+        Footer["WidgetFooter<br/>(Home + Inbox)"]
+    end
+
+    Header --> Content --> Footer
+      </div>
+    </div>
+  </main>
+  <script src="nav.js"></script>
+</body>
+</html>

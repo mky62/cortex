@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI System — Cortex Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main">
+    <div class="content">
+      <h1>AI System</h1>
+      <p>Cortex uses an AI agent with RAG-powered knowledge base search, conversation management tools, and multi-model support.</p>
+
+      <h2>Architecture</h2>
+      <div class="mermaid">
+flowchart TD
+    subgraph Customer Message Flow
+        Msg["Customer sends message"]
+        GST["generateSupportText<br/>(gpt-4o-mini)"]
+        Check{"Status ==<br/>'unresolved'?"}
+        Agent["supportAgent.generateText()<br/>with tools"]
+        Save["saveMessage<br/>(user message only)"]
+    end
+
+    subgraph Agent Tools
+        Search["searchTool<br/>→ RAG search → interpret"]
+        Escalate["escalateConversationTool<br/>→ Set status 'escalated'"]
+        Resolve["resolveConversationTool<br/>→ Set status 'resolved'"]
+    end
+
+    subgraph RAG Pipeline
+        RAGSearch["RAG Search<br/>(namespace: orgId)"]
+        Interpret["Interpret Results<br/>(SEARCH_INTERPRETER_PROMPT)"]
+        SaveMsg["Save as assistant message"]
+    end
+
+    Msg --> GST
+    GST --> Check
+    Check -->|Yes| Agent
+    Check -->|No| Save
+    Agent --> Search
+    Agent --> Escalate
+    Agent --> Resolve
+    Search --> RAGSearch
+    RAGSearch --> Interpret
+    Interpret --> SaveMsg
+      </div>
+
+      <h2>Support Agent</h2>
+      <p>Defined in <code>packages/backend/convex/system/ai/agents/supportAgent.ts</code>.</p>
+      <ul>
+        <li><strong>Framework</strong>: <code>@convex-dev/agent</code></li>
+        <li><strong>Model</strong>: OpenRouter → <code>openai/gpt-4o-mini</code></li>
+        <li><strong>Max tokens</strong>: 1024</li>
+        <li><strong>Instructions</strong>: <code>SUPPORT_AGENT_PROMPT</code></li>
+      </ul>
+      <p>The agent is stateless per-call but maintains conversation history via threads managed by <code>@convex-dev/agent</code>.</p>
+
+      <h2>RAG (Retrieval-Augmented Generation)</h2>
+      <p>Defined in <code>packages/backend/convex/system/ai/rag.ts</code>.</p>
+      <ul>
+        <li><strong>Framework</strong>: <code>@convex-dev/rag</code></li>
+        <li><strong>Embedding model</strong>: OpenRouter → <code>openai/text-embedding-3-small</code></li>
+        <li><strong>Embedding dimension</strong>: 1536</li>
+        <li><strong>Namespacing</strong>: Per <code>organizationId</code> — each org has its own search space</li>
+        <li><strong>File storage</strong>: Convex file storage with content hashing for deduplication</li>
+      </ul>
+
+      <h3>Search Flow</h3>
+      <div class="mermaid">
+sequenceDiagram
+    participant Agent as Support Agent
+    participant Tool as searchTool
+    participant RAG as @convex-dev/rag
+    participant LLM as OpenRouter<br/>(gpt-4o-mini)
+
+    Agent->>Tool: search(query)
+    Tool->>RAG: search(namespace: orgId, query, limit: 5)
+    RAG-->>Tool: entries + text
+    Tool->>Tool: Build context from results
+    Tool->>LLM: Interpret with SEARCH_INTERPRETER_PROMPT
+    LLM-->>Tool: Interpreted response
+    Tool->>Agent: saveMessage (assistant)
+    Tool-->>Agent: Return interpreted text
+      </div>
+
+      <h2>Tools</h2>
+
+      <h3>searchTool</h3>
+      <p>Searches the organization's knowledge base and interprets results.</p>
+      <ul>
+        <li><strong>Input</strong>: <code>{ query: string }</code></li>
+        <li><strong>Flow</strong>: Look up conversation → get <code>organizationId</code> → Search RAG namespace → Build context → Generate interpretation → Save as assistant message → Return text</li>
+      </ul>
+
+      <h3>escalateConversationTool</h3>
+      <p>Marks conversation as escalated (requires human operator).</p>
+      <ul>
+        <li><strong>Input</strong>: <code>{}</code> (uses threadId from context)</li>
+        <li><strong>Flow</strong>: Call <code>system.conversations.escalate</code> → Save "Conversation escalated" message → Return confirmation</li>
+      </ul>
+
+      <h3>resolveConversationTool</h3>
+      <p>Marks conversation as resolved.</p>
+      <ul>
+        <li><strong>Input</strong>: <code>{}</code> (uses threadId from context)</li>
+        <li><strong>Flow</strong>: Call <code>system.conversations.resolve</code> → Save "Conversation resolved" message → Return confirmation</li>
+      </ul>
+
+      <h2>File Processing</h2>
+      <p>Defined in <code>packages/backend/convex/lib/extractTextContent.ts</code>.</p>
+
+      <div class="mermaid">
+flowchart TD
+    File["Uploaded File"]
+    CheckMime{"MIME Type?"}
+    Text["Direct decode<br/>(TextDecoder)"]
+    PDF["AI Extraction<br/>(Gemini 2.0 Flash)"]
+    Image["AI OCR/Description<br/>(Gemini 2.0 Flash)"]
+    Error["Reject:<br/>Unsupported type"]
+    Index["Index via RAG<br/>(namespace: orgId)"]
+
+    File --> CheckMime
+    CheckMime -->|text/*| Text
+    CheckMime -->|application/pdf| PDF
+    CheckMime -->|image/*| Image
+    CheckMime -->|other| Error
+    Text --> Index
+    PDF --> Index
+    Image --> Index
+      </div>
+
+      <table>
+        <thead><tr><th>File Type</th><th>Processing</th><th>Model</th></tr></thead>
+        <tbody>
+          <tr><td>Plain text</td><td>Direct decode</td><td>None</td></tr>
+          <tr><td>PDF</td><td>AI extraction</td><td>Google Gemini 2.0 Flash</td></tr>
+          <tr><td>Images (JPEG, PNG, WebP, GIF)</td><td>AI OCR/description</td><td>Google Gemini 2.0 Flash</td></tr>
+          <tr><td>Other</td><td>Rejected with error</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <p>Extracted text is then indexed via RAG with:</p>
+      <ul>
+        <li><strong>Namespace</strong>: Organization ID</li>
+        <li><strong>Key</strong>: Filename</li>
+        <li><strong>Content hash</strong>: Prevents re-indexing unchanged files</li>
+        <li><strong>Metadata</strong>: <code>storageId</code>, <code>uploadedBy</code>, <code>filename</code>, <code>category</code></li>
+      </ul>
+
+      <h2>Operator Message Enhancement</h2>
+      <p>Defined in <code>packages/backend/convex/private/messages.ts</code> → <code>enhanceResponse</code>.</p>
+      <ul>
+        <li><strong>Model</strong>: OpenRouter → <code>qwen/qwen3.6-plus</code></li>
+        <li><strong>Max tokens</strong>: 1024</li>
+        <li><strong>Purpose</strong>: Polishes operator draft messages for professionalism while preserving intent</li>
+        <li><strong>Prompt</strong>: <code>OPERATOR_MESSAGE_ENHANCEMENT_PROMPT</code></li>
+      </ul>
+
+      <h2>Prompt Constants</h2>
+      <p>All prompts are in <code>packages/backend/convex/system/ai/constants.ts</code>.</p>
+
+      <div class="card">
+        <div class="card-title">SUPPORT_AGENT_PROMPT</div>
+        <p>Identity: Friendly AI support assistant. Must search knowledge base before answering product questions. Escalate when unsure or when customer requests human help. Resolve when customer is satisfied. Never make up information — only use search results.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">SEARCH_INTERPRETER_PROMPT</div>
+        <p>Interprets RAG search results into conversational answers. Faithful to search results only — no invention. Offers human support when results are insufficient.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">OPERATOR_MESSAGE_ENHANCEMENT_PROMPT</div>
+        <p>Enhances operator messages for clarity and professionalism. Preserves original intent, specific details, and tone. Fixes grammar, removes redundancy, structures information. Returns only the enhanced message.</p>
+      </div>
+
+      <h2>Message Flow Details</h2>
+
+      <h3>Customer sends a message (public API)</h3>
+      <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant API as public.messages.create
+    participant Agent as Support Agent
+    participant Tools as Agent Tools
+
+    C->>API: prompt + threadId + contactSessionId
+    API->>API: Validate session + conversation
+    API->>Agent: generateSupportText()
+    Agent-->>API: AI response saved to thread
+    alt Status is "unresolved"
+        API->>Agent: generateText() with tools
+        Agent->>Tools: May call search/escalate/resolve
+        Tools-->>Agent: Tool results
+        Agent-->>API: Final response
+    else Status is "escalated"
+        API->>API: saveMessage() only
+        Note over API: No AI agent — operator handles
+    end
+    API-->>C: Real-time update
+      </div>
+
+      <h3>Operator sends a message (private API)</h3>
+      <div class="mermaid">
+sequenceDiagram
+    participant O as Operator
+    participant API as private.messages.create
+    participant Thread as Agent Thread
+
+    O->>API: prompt + conversationId
+    API->>API: Validate Clerk identity + org
+    API->>API: Validate conversation (not resolved)
+    alt Status is "unresolved"
+        API->>API: Auto-escalate to "escalated"
+    end
+    API->>Thread: saveMessage (assistant)
+    Thread-->>O: Real-time update
+      </div>
+
+      <h3>Operator enhances a draft (private API)</h3>
+      <div class="mermaid">
+sequenceDiagram
+    participant O as Operator
+    participant API as enhanceResponse
+    participant LLM as OpenRouter<br/>(qwen3.6-plus)
+
+    O->>API: draft message
+    API->>API: Validate Clerk identity + org
+    API->>LLM: OPERATOR_MESSAGE_ENHANCEMENT_PROMPT + draft
+    LLM-->>API: Enhanced message
+    API-->>O: Return enhanced text
+      </div>
+    </div>
+  </main>
+  <script src="nav.js"></script>
+</body>
+</html>
