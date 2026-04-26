@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useAtomValue, useSetAtom } from "jotai"
-import { useAction, useMutation } from "convex/react"
+import { useAction, useMutation , useQuery} from "convex/react"
 import { Loader2 } from "lucide-react"
 import { WidgetHeader } from "@/modules/widget/ui/components/widget-header"
 import { api } from "@workspace/backend/convex/_generated/api"
@@ -12,12 +12,13 @@ import {
   loadingMessageAtom,
   organizationIdAtom,
   screenAtom,
+  widgetSettingsAtom
 } from "@/modules/widget/atoms/widget-atoms"
-import { CONTACT_SESSION_KEY } from "@/modules/widget/constants"
 
 type InitStep = "org" | "auth" | "session" | "settings" | "vapi" | "done"
 
 export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string | null }) => {
+  const setWidgetSettings = useSetAtom(widgetSettingsAtom);
   const [step, setStep] = useState<InitStep>("org")
   const [sessionValid, setSessionValid] = useState(false)
 
@@ -77,9 +78,11 @@ export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string
 
     setLoadingMessage("Checking session")  
 
+
+
     if (!contactSessionId) {
       setSessionValid(false)
-      setStep("done")
+      setStep("settings")
       return
     }
 
@@ -88,13 +91,44 @@ export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string
     validateContactSession({contactSessionId})
       .then((result) => {
         setSessionValid(result.valid)
-        setStep("done")
+        setStep("settings")
       })
       .catch(() => {
         setSessionValid(false)
-        setStep("done")
+        setStep("settings")
       })
-  }, [setLoadingMessage, step, validateContactSession])
+  }, [setLoadingMessage, contactSessionId ,step, validateContactSession])
+
+    const widgetSettings = useQuery(api.public.widgetSettings.getByOrganizationId, 
+    organizationId ? {
+      organizationId,
+    } : "skip",
+  );
+  
+  useEffect(() => {
+  if (step !== "settings") return;
+
+  setLoadingMessage("Loading widget settings...");
+
+  if (widgetSettings === undefined) return;
+
+  if (widgetSettings === null) {
+    setErrorMessage("Widget settings not found");
+    setScreen("error");
+    return;
+  }
+
+  setWidgetSettings(widgetSettings);
+  setStep("done");
+}, [
+  step,
+  widgetSettings,
+  setWidgetSettings,
+  setLoadingMessage,
+  setErrorMessage,
+  setScreen,
+]);
+
 
   useEffect(() => {
     if (step !== "done") return;

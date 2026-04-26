@@ -1,81 +1,72 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod/v4"
-import { MessageSquareDashedIcon } from "lucide-react";
-import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
-import { useForm } from "react-hook-form"
-import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
-import { useThreadMessages, toUIMessages } from "@convex-dev/agent/react"
-import { useAtomValue, useSetAtom } from "jotai"
-import { useAction, useQuery } from "convex/react"
-import { screenAtom , organizationIdAtom , conversationIdAtom, contactSessionIdAtomFamily, widgetSettingsAtom} from "../../atoms/widget-atoms"
-import { WidgetHeader } from "@/modules/widget/ui/components/widget-header"
-import { ArrowBigLeft } from "lucide-react"
+import { AISuggestion, AISuggestions } from "@workspace/ui/components/ai/suggestion";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { useThreadMessages, toUIMessages } from "@convex-dev/agent/react";
+import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
 import { Button } from "@workspace/ui/components/button";
+import { useAtomValue, useSetAtom } from "jotai";
+import { ArrowLeftIcon, MenuIcon, MessageCircle } from "lucide-react";
+import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
+import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
+import { contactSessionIdAtomFamily, conversationIdAtom, organizationIdAtom, screenAtom, widgetSettingsAtom } from "../../atoms/widget-atoms";
+import { useAction, useQuery } from "convex/react";
 import { api } from "@workspace/backend/convex/_generated/api";
 import { Form, FormField } from "@workspace/ui/components/form";
-import { useMemo } from "react";
-
-
 import {
   AIConversation,
   AIConversationContent,
-} from "@workspace/ui/components/ai/conversation"
-
+  AIConversationScrollButton,
+} from "@workspace/ui/components/ai/conversation";
 import {
   AIInput,
+  AIInputSubmit,
   AIInputTextarea,
   AIInputToolbar,
   AIInputTools,
-  AIInputSubmit,
-} from "@workspace/ui/components/ai/input"
-
+} from "@workspace/ui/components/ai/input";
 import {
   AIMessage,
   AIMessageContent,
-  
-} from "@workspace/ui/components/ai/message"
-
-import {
-  AISuggestion,
-  AISuggestions,
-
-} from "@workspace/ui/components/ai/suggestion"
-
-import { AIResponse } from "@workspace/ui/components/ai/response"
+} from "@workspace/ui/components/ai/message";
+import { AIResponse } from "@workspace/ui/components/ai/response";
+import { useMemo } from "react";
 
 const formSchema = z.object({
-  message: z.string().min(1, "Mesage is required")
-})
+  message: z.string().min(1, "Message is required"),
+});
 
 export const WidgetChatScreen = () => {
-  const setScreen = useSetAtom(screenAtom)
-  const setConversationId = useSetAtom(conversationIdAtom)
-  const conversationId = useAtomValue(conversationIdAtom)
-  const organizationId = useAtomValue(organizationIdAtom)
-  const contactSessionId = useAtomValue(contactSessionIdAtomFamily(organizationId || '' ))
+  const setScreen = useSetAtom(screenAtom);
+  const setConversationId = useSetAtom(conversationIdAtom);
 
   const widgetSettings = useAtomValue(widgetSettingsAtom);
+  const conversationId = useAtomValue(conversationIdAtom);
+  const organizationId = useAtomValue(organizationIdAtom);
+  const contactSessionId = useAtomValue(
+    contactSessionIdAtomFamily(organizationId || "")
+  );
 
-   const onBack = () => {
+  const onBack = () => {
     setConversationId(null);
-    setScreen("selection")
-  }
+    setScreen("selection");
+  };
 
-   const suggestions = useMemo(() => {
+  const suggestions = useMemo(() => {
     if (!widgetSettings) {
       return [];
     }
 
-      return Object.keys(widgetSettings.defaultSuggestions).map((key) => {
+    return Object.keys(widgetSettings.defaultSuggestions).map((key) => {
       return widgetSettings.defaultSuggestions[
         key as keyof typeof widgetSettings.defaultSuggestions
       ];
     });
   }, [widgetSettings]);
 
-   const conversation = useQuery(
+  const conversation = useQuery(
     api.public.conversations.getOne,
     conversationId && contactSessionId
       ? {
@@ -85,90 +76,91 @@ export const WidgetChatScreen = () => {
       : "skip"
   );
 
-   const messages = useThreadMessages(
+  const messages = useThreadMessages(
     api.public.messages.getMany,
     conversation?.threadId && contactSessionId
-    ? {
-      threadId: conversation.threadId,
-      contactSessionId,
-    }
-    : "skip",
-    { initialNumItems: 10}
-   );
+      ? {
+          threadId: conversation.threadId,
+          contactSessionId,
+        }
+      : "skip",
+    { initialNumItems: 10 },
+  );
 
-  
   const { topElementRef, handleLoadMore, canLoadMore, isLoadingMore } = useInfiniteScroll({
     status: messages.status,
     loadMore: messages.loadMore,
     loadSize: 10,
   });
 
-   const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      message: ""
+      message: "",
+    },
+  });
+
+  const createMessage = useAction(api.public.messages.create);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!conversation || !contactSessionId) {
+      return;
     }
-   })
 
-   const createMessage = useAction(api.public.messages.create);
-   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!conversation || !contactSessionId) return;
-
-
-   form.reset();
+    form.reset();
 
     await createMessage({
-      threadId: conversation?.threadId,
+      threadId: conversation.threadId,
       prompt: values.message,
       contactSessionId,
-     })
-
-   }
-
-
+    });
+  };
 
   return (
     <>
       <WidgetHeader className="flex items-center justify-between">
-       <div className="flex items-center gap-2">
+        <div className="flex items-center gap-x-2">
+          <Button
+            onClick={onBack}
+            size="icon"
+            variant="ghost"
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <p>Chat</p>
+        </div>
         <Button
-        size="icon"
-        variant="ghost"
-        onClick={onBack}
+          size="icon"
+          variant="ghost"
         >
-        <ArrowBigLeft /> 
+          <MenuIcon />
         </Button>
-        <p>Chat</p>
-       </div>
       </WidgetHeader>
       <AIConversation>
-      <AIConversationContent className="mx-auto flex w-full max-w-3xl flex-col px-4 py-6">
-        <InfiniteScrollTrigger
+        <AIConversationContent>
+          <InfiniteScrollTrigger
             canLoadMore={canLoadMore}
             isLoadingMore={isLoadingMore}
             onLoadMore={handleLoadMore}
             ref={topElementRef}
           />
-        {toUIMessages(messages.results ?? [])?.map((message) => {
-          return (
-            <AIMessage
-            from={message.role === "user" ? "user" : "assistant"}
-            key={message.id}>
-              <AIMessageContent>
-                <AIResponse>{message.text}</AIResponse>
-              </AIMessageContent>
-               {message.role === "assistant" && (
-                  <MessageSquareDashedIcon
-                    seed="assistant"
-                    size={32}
-                  />
+          {toUIMessages(messages.results ?? [])?.map((message) => {
+            return (
+              <AIMessage
+                from={message.role === "user" ? "user" : "assistant"}
+                key={message.id}
+              >
+                <AIMessageContent>
+                  <AIResponse>{message.text}</AIResponse>
+                </AIMessageContent>
+                {message.role === "assistant" && (
+                  <MessageCircle className="ml-2 h-4 w-4 text-muted-foreground" />
                 )}
-            </AIMessage>
-          )
-        }) }
-      </AIConversationContent>
+              </AIMessage>
+            )
+          })}
+        </AIConversationContent>
       </AIConversation>
-            {toUIMessages(messages.results ?? [])?.length === 1 && (
+      {toUIMessages(messages.results ?? [])?.length === 1 && (
         <AISuggestions className="flex w-full flex-col items-end p-2">
           {suggestions.map((suggestion) => {
             if (!suggestion) {
@@ -192,11 +184,9 @@ export const WidgetChatScreen = () => {
           })}
         </AISuggestions>
       )}
-      <div className="border-t bg-background p-3">
-      <div className="mx-auto w-full max-w-3xl">
       <Form {...form}>
           <AIInput
-            className="rounded-lg"
+            className="rounded-none border-x-0 border-b-0"
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <FormField
@@ -232,8 +222,6 @@ export const WidgetChatScreen = () => {
             </AIInputToolbar>
           </AIInput>
       </Form>
-      </div>
-      </div>
-      </>
-  )
-}
+    </>
+  );
+};
