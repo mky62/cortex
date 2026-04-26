@@ -25,7 +25,7 @@ export default defineSchema({
     .index("by_organization_id", ["organizationId"])
     .index("by_organization_id_and_service", ["organizationId", "service"]),
     conversations: defineTable({
-        threadId: v.string(),
+        threadId: v.optional(v.string()),
         organizationId: v.string(),
         contactSessionId: v.id("contactSessions"),
         status: v.union(
@@ -33,6 +33,18 @@ export default defineSchema({
             v.literal("escalated"),
             v.literal("resolved")
         ),
+        type: v.optional(v.union(v.literal("chat"), v.literal("voice"))),
+        voiceTranscript: v.optional(v.array(v.object({
+            role: v.union(v.literal("user"), v.literal("assistant")),
+            text: v.string(),
+            timestamp: v.number(),
+        }))),
+        voiceMetadata: v.optional(v.object({
+            callId: v.optional(v.string()),
+            duration: v.optional(v.number()),
+            startedAt: v.optional(v.number()),
+            endedAt: v.optional(v.number()),
+        })),
     })
      .index("by_organization_id", ["organizationId"])
      .index("by_contact_session_id", ["contactSessionId"])

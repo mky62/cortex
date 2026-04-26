@@ -36,7 +36,7 @@ export const generateSupportText = async (
   ctx: ActionCtx,
   threadOpts: { userId?: string | null; threadId?: string },
   args: { prompt: string },
-) => {
+): Promise<string> => {
   if (!process.env.OPENROUTER_API_KEY?.trim()) {
     throw new ConvexError({
       code: "AI_CONFIGURATION_ERROR",
@@ -45,7 +45,8 @@ export const generateSupportText = async (
   }
 
   try {
-    return await supportAgent.generateText(ctx, threadOpts, args);
+    const result = await supportAgent.generateText(ctx, threadOpts, args);
+    return result.text;
   } catch (error) {
     if (isOpenRouterAuthError(error)) {
       throw new ConvexError({

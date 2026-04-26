@@ -149,13 +149,16 @@ export const getMany = query({
         const contactSession = await ctx.db.get(conversation.contactSessionId)
         let lastMessage: MessageDoc | null = null
 
-        const messages = await supportAgent.listMessages(ctx, {
-          threadId: conversation.threadId,
-          paginationOpts: { numItems: 1, cursor: null },
-        })
+        // Only fetch messages for chat conversations (or legacy) with threadId
+        if ((conversation.type === "chat" || !conversation.type) && conversation.threadId) {
+          const messages = await supportAgent.listMessages(ctx, {
+            threadId: conversation.threadId,
+            paginationOpts: { numItems: 1, cursor: null },
+          })
 
-        if (messages.page.length > 0) {
-          lastMessage = messages.page[0] ?? null
+          if (messages.page.length > 0) {
+            lastMessage = messages.page[0] ?? null
+          }
         }
 
         return {

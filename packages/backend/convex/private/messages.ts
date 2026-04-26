@@ -108,14 +108,21 @@ export const create = mutation({
             });
         }
 
+        // Only save messages for chat conversations with threadId
+        if (!conversation.threadId) {
+            throw new ConvexError({
+                code: "BAD_REQUEST",
+                message: "Cannot send message to voice conversation"
+            });
+        }
 
         await saveMessage(ctx, components.agent, {
-        threadId: conversation.threadId,
-        agentName: identity.familyName,
-        message: {
-            role: "assistant",
-            content: args.prompt,
-        },
+            threadId: conversation.threadId,
+            agentName: identity.familyName,
+            message: {
+                role: "assistant",
+                content: args.prompt,
+            },
         });
 
 
