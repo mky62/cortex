@@ -1,27 +1,34 @@
 "use client"
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { screenAtom , conversationIdAtom, errorMessageAtom, organizationIdAtom, contactSessionIdAtomFamily} from "../../atoms/widget-atoms";
+import { screenAtom , conversationIdAtom,hasVapiSecretsAtom, errorMessageAtom, organizationIdAtom, contactSessionIdAtomFamily, widgetSettingsAtom} from "../../atoms/widget-atoms";
 import {WidgetHeader} from "../components/widget-header";
 import { MessageSquareIcon } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { useMutation } from "convex/react";
 import { api } from "@workspace/backend/convex/_generated/api";
-import { useState } from "react";
+import {  useState } from "react";
 import {WidgetFooter} from "../components/widget-footer";
+import { MicIcon, ChevronRightIcon} from 'lucide-react'
 
 
 export const WidgetSelectionScreen = () => {
 
   const setScreen = useSetAtom(screenAtom);
     const setErrorMessage = useSetAtom(errorMessageAtom);
+
   const organizationId = useAtomValue(organizationIdAtom);
   const contactSessionId = useAtomValue( contactSessionIdAtomFamily (organizationId || "" ));
   const setConversationId = useSetAtom(conversationIdAtom);
 
 
+  const widgetSettings = useAtomValue(widgetSettingsAtom);
+  const hasVapiSecrets = useAtomValue(hasVapiSecretsAtom);
+
+
   const createConversation = useMutation(api.public.conversations.create)
    const [ isPending, setIsPending] = useState(false);
+
 
   const handleNewConversations = async () => {
     if (!organizationId) {
@@ -52,6 +59,7 @@ export const WidgetSelectionScreen = () => {
     }
        
   }
+
   return (
     <>
       <WidgetHeader>
@@ -65,16 +73,37 @@ export const WidgetSelectionScreen = () => {
         </div>
       </WidgetHeader>
 
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex gap-2 flex-1 flex-col p-4">
         <Button
           className="h-12 w-full justify-start rounded-lg"
           disabled={isPending}
           onClick={handleNewConversations}
         >
           <MessageSquareIcon className="mr-2 h-4 w-4" />
-          Chat with us  
+          Chat with us 
         </Button>
+
+
+       {hasVapiSecrets && widgetSettings?.vapiSettings?.assistantId && (
+          <Button
+            className="h-16 w-full justify-between"
+            variant="outline"
+            onClick={() => setScreen("voice")}
+            disabled={isPending}
+          >
+            <div className="flex items-center gap-x-2">
+              <MicIcon className="size-4" />
+              <span>Start voice call</span>
+            </div>
+            <ChevronRightIcon />
+          </Button>
+        )}
+
+
       </div>
+    
+
+     
       <WidgetFooter/>
      
     </>
