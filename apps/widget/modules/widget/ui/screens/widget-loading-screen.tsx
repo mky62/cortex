@@ -123,7 +123,7 @@ export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string
   }
 
   setWidgetSettings(widgetSettings);
-  setStep("done");
+  setStep("vapi");
 }, [
   step,
   widgetSettings,

@@ -1,6 +1,8 @@
 import Vapi from "@vapi-ai/web";
+import { useAtomValue } from "jotai";
 import { start } from "node:repl";
 import { useEffect, useState } from "react";
+import { vapiSecretsAtom, widgetSettingsAtom } from "../atoms/widget-atoms";
 
 
 interface TranscriptMessage {
@@ -9,6 +11,10 @@ interface TranscriptMessage {
 };
 
 export const useVapi = () => {
+
+     const vapiSecrets = useAtomValue(vapiSecretsAtom);
+     const widgetSettings = useAtomValue(widgetSettingsAtom);
+
     const [vapi, setVapi] = useState<Vapi | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -16,7 +22,13 @@ export const useVapi = () => {
     const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
 
     useEffect(() => {
-        const vapiInstance = new Vapi('cb1ee095-9018-4e46-9444-29773dbf5973')
+
+    if (!vapiSecrets) {
+        return;
+    }
+
+    const vapiInstance = new Vapi(vapiSecrets.publicApiKey);
+    setVapi(vapiInstance);
 
         setVapi(vapiInstance);
 
@@ -63,13 +75,15 @@ export const useVapi = () => {
     }, []);
 
     const startCall = () => {
-        setIsConnecting(true);
-
-        if (vapi) {
-            vapi.start('cb1ee095-9018-4e46-9444-29773dbf5973');
-        }
+    if (!vapiSecrets || !widgetSettings?.vapiSettings?.assistantId) {
+      return;
     }
+    setIsConnecting(true);
 
+    if (vapi) {
+      vapi.start(widgetSettings.vapiSettings.assistantId);
+    }
+  }
     const endCall = () => {
         if (vapi) {
             vapi.stop();

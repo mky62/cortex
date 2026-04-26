@@ -10,6 +10,8 @@ import { WidgetLoadingScreen } from '@/modules/widget/ui/screens/widget-loading-
 import { WidgetSelectionScreen } from '@/modules/widget/ui/screens/widget-selection-screen';
 import { WidgetChatScreen } from '@/modules/widget/ui/screens/widget-chat-screen';
 import { WidgetInboxScreen } from '@/modules/widget/ui/screens/widget-inbox-screen';
+import { WidgetVoiceScreen } from '../screens/widget-voice-screen';
+import { WidgetContactScreen } from '../screens/widget-contact-screen';
 
 interface organizationProps {
     organizationId: string
@@ -24,10 +26,10 @@ export const WidgetView = ({ organizationId }: organizationProps) => {
     loading: <WidgetLoadingScreen organizationId={organizationId} />,
     auth: <WidgetAuthScreen />,
     chat: <WidgetChatScreen />,
-    contact: <p></p>,
+    contact: <WidgetContactScreen />,
     inbox: <WidgetInboxScreen />,
     selection: <WidgetSelectionScreen />,
-    voice: <p></p>,
+    voice: <WidgetVoiceScreen />,
   }
 
   return (
