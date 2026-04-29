@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Chat — Cortex Docs</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div id="sidebar-placeholder"></div>
+
+    <main class="main">
+      <div class="content chat-page">
+        <h1>AI Documentation Assistant</h1>
+        <p>
+          Chat with an AI that has access to all Cortex documentation.
+          Powered by OpenRouter with RAG retrieval.
+        </p>
+
+        <div class="chat-settings" id="chat-settings">
+          <div class="settings-header">
+            <i data-lucide="settings-2"></i>
+            <span>Configuration</span>
+          </div>
+          <div class="settings-content">
+            <div class="setting-item">
+              <label for="api-key">OpenRouter API Key</label>
+              <input
+                type="password"
+                id="api-key"
+                placeholder="Enter your OpenRouter API key"
+                autocomplete="off"
+              />
+              <span class="hint">
+                Get a free key from <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a>.
+                Free models available. Your key is stored locally in your browser.
+              </span>
+            </div>
+            <div class="setting-row">
+              <div class="setting-item">
+                <label for="model-select">Model</label>
+                <select id="model-select">
+                  <option value="nvidia/nemotron-3-super-120b-a12b:free" selected>Nemotron 3 Super 120B (Free)</option>
+                  <option value="google/gemini-2.0-flash:free">Gemini 2.0 Flash (Free)</option>
+                  <option value="meta-llama/llama-4-maverick:free">Llama 4 Maverick (Free)</option>
+                  <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3 (Free)</option>
+                </select>
+              </div>
+              <div class="setting-item">
+                <label for="retrieval-k">Retrieval Chunks</label>
+                <input type="number" id="retrieval-k" value="3" min="1" max="10" />
+              </div>
+            </div>
+            <button id="save-settings" class="btn btn-primary">
+              <i data-lucide="save"></i> Save & Initialize
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-container" id="chat-container" style="display: none;">
+          <div class="chat-messages" id="chat-messages">
+            <div class="message assistant">
+              <div class="message-avatar">
+                <i data-lucide="bot"></i>
+              </div>
+              <div class="message-content">
+                <p>Hello! I'm your Cortex documentation assistant powered by OpenRouter. I've indexed all the documentation and can answer questions about:</p>
+                <ul>
+                  <li>Architecture and system design</li>
+                  <li>Database schema and API references</li>
+                  <li>AI system and RAG pipeline</li>
+                  <li>Widget and dashboard implementation</li>
+                  <li>Configuration and setup</li>
+                </ul>
+                <p>What would you like to know?</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="chat-input-container">
+            <div class="retrieval-status" id="retrieval-status"></div>
+            <div class="chat-input-wrapper">
+              <textarea 
+                id="chat-input" 
+                placeholder="Ask a question about Cortex..."
+                rows="1"
+              ></textarea>
+              <button id="send-btn" class="send-btn" disabled>
+                <i data-lucide="send"></i>
+              </button>
+            </div>
+            <div class="chat-hint">
+              <span id="index-status">Initializing knowledge base...</span>
+              <span id="token-count"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="docs-index" id="docs-index" style="display: none;">
+          <h3>Indexed Documents</h3>
+          <div class="docs-list" id="docs-list"></div>
+        </div>
+      </div>
+    </main>
+
+    <script src="nav.js"></script>
+    <script src="docs-chat.js"></script>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "type": "semantic-embedding-index",
+  "version": 2,
+  "model": "text-embedding-3-small",
+  "dimension": 1536,
+  "chunkCount": 0,
+  "files": [
+    "README.md",
+    "architecture.md",
+    "database-schema.md",
+    "backend-api.md",
+    "ai-system.md",
+    "widget-app.md",
+    "web-dashboard.md",
+    "configuration.md",
+    "known-issues.md"
+  ],
+  "generatedAt": "2026-04-26T20:32:34.357Z",
+  "notes": "Semantic embeddings via text-embedding-3-small. High-quality chunks from markdown source with header-aware splitting.",
+  "chunks": []
+}

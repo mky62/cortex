@@ -2,6 +2,18 @@
 
 The operator dashboard at `apps/web` (port 3000).
 
+## Purpose
+
+The Web Dashboard is the **operator interface** for managing customer support. Support agents and administrators use it to:
+
+- **Monitor and respond** to customer conversations (chat and voice)
+- **Manage the knowledge base** — upload files that the AI agent uses for RAG retrieval
+- **Configure the widget** — customize greeting messages, suggestions, and voice settings
+- **Escalate or resolve** conversations that need human attention
+- **Connect voice AI** — integrate Vapi for phone call handling
+
+It complements the Widget (customer-facing chat interface) by giving support teams full control over the AI-powered support system.
+
 ## Overview
 
 - **Authentication**: Clerk with organization scoping
