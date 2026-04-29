@@ -108,7 +108,11 @@ export function SignInView() {
         <section className="flex h-full min-h-0 items-center justify-center  overflow-hidden lg:justify-end">
           <div className="flex w-full max-w-xl items-center justify-center rounded-lg bg-background/40  p-4 pt-10 shadow-xl sm:p-6 sm:pt-12 lg:p-8 lg:pt-14">
           <div className="flex w-full m-12 justify-center">
-            <SignIn appearance={clerkAppearance} />
+            <SignIn
+              appearance={clerkAppearance}
+              fallbackRedirectUrl="/org-selection"
+              signUpUrl="/sign-up"
+            />
           </div>
           </div>
         </section>
